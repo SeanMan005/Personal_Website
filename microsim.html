@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Microbial Adaptive Learning Field</title>
+<meta name="description" content="A live browser simulation of the three-body adaptive machine: metabolism generates the variants, the environment selects among them, the genome records the survivors, and the record reshapes the next cycle.">
+<style>
+:root{
+  --bg:#0b0e16; --panel:#121726; --box:#161d33; --ink:#e8ecf6; --mute:#7c87a3;
+  --grid:#26304a; --master:#f4c95d;
+  --gen:#4f8ef7;   /* compute   */
+  --sel:#e8a05a;   /* interface */
+  --rec:#5fd0a0;   /* record    */
+  --warn:#e0556b;
+  --mono:ui-monospace,"DejaVu Sans Mono",Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:400 15px/1.55 -apple-system,Segoe UI,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased}
+.wrap{max-width:1500px;margin:0 auto;padding:22px 22px 60px}
+h1{font-size:clamp(19px,2.4vw,25px);margin:0;font-weight:700;
+  text-transform:uppercase;letter-spacing:.055em}
+.lede{color:var(--mute);font-size:13.5px;margin:7px 0 0;max-width:110ch}
+.lede b{color:#c3cbdd;font-weight:600}
+
+.stage{display:grid;grid-template-columns:minmax(360px,0.95fr) 1.25fr;
+  gap:18px;margin-top:20px;align-items:start}
+
+.fieldbox{position:relative;background:var(--panel);border:1px solid var(--grid);
+  border-radius:12px;overflow:hidden;aspect-ratio:1/1}
+#field{display:block;width:100%;height:100%}
+.readout{position:absolute;top:9px;left:9px;right:9px;
+  font:400 11.5px/1.5 var(--mono);color:#fff;white-space:pre;
+  background:rgba(0,0,0,.6);border-radius:8px;padding:7px 9px;
+  pointer-events:none;letter-spacing:-.01em}
+.binding{position:absolute;right:10px;bottom:10px;font-size:11.5px;font-weight:700;
+  letter-spacing:.06em;color:#fff;background:rgba(0,0,0,.72);border-radius:8px;
+  padding:6px 11px;pointer-events:none}
+
+.panelbox{background:var(--panel);border:1px solid var(--grid);border-radius:12px;
+  padding:10px}
+#panels{display:block;width:100%;height:auto}
+
+.console{display:grid;grid-template-columns:1.55fr .62fr .52fr;gap:18px;margin-top:18px}
+.card{background:var(--panel);border:1px solid var(--grid);border-radius:12px;
+  padding:15px 17px 17px}
+.card h2{font-size:10.5px;letter-spacing:.17em;text-transform:uppercase;
+  color:var(--mute);margin:0 0 3px}
+.card .hint{font-size:11.5px;color:var(--mute);margin:0 0 13px}
+.card .hint i{font-style:normal}
+.k-gen{color:var(--gen)} .k-sel{color:var(--sel)} .k-rec{color:var(--rec)}
+
+.sliders{display:grid;grid-template-columns:1fr 1fr;gap:3px 22px}
+.sl{display:grid;grid-template-columns:118px 1fr 46px;align-items:center;gap:9px;
+  padding:3px 0}
+.sl label{font-size:11.5px;color:var(--mute);text-align:right;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sl output{font:400 11.5px var(--mono);color:#c3cbdd;text-align:right;
+  font-variant-numeric:tabular-nums}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:14px;
+  background:transparent;cursor:pointer;margin:0}
+input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:3px;
+  background:var(--box);border:1px solid var(--grid)}
+input[type=range]::-moz-range-track{height:4px;border-radius:3px;
+  background:var(--box);border:1px solid var(--grid)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;
+  border-radius:50%;background:var(--c,var(--gen));margin-top:-5px;border:none}
+input[type=range]::-moz-range-thumb{width:12px;height:12px;border:none;
+  border-radius:50%;background:var(--c,var(--gen))}
+
+.presets{display:flex;flex-direction:column;gap:3px}
+.preset{display:flex;align-items:center;gap:9px;background:none;border:none;
+  color:var(--mute);font:inherit;font-size:12.5px;text-align:left;cursor:pointer;
+  padding:4px 7px;border-radius:7px;width:100%}
+.preset:hover{background:var(--box);color:var(--ink)}
+.preset .dot{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--grid);
+  flex:none}
+.preset.on{color:var(--ink);background:var(--box)}
+.preset.on .dot{background:var(--master);border-color:var(--master)}
+.preset small{display:block;font-size:10.5px;color:var(--mute);letter-spacing:.02em}
+
+.btns{display:flex;flex-direction:column;gap:7px}
+.btn{background:var(--box);border:1px solid var(--grid);color:var(--ink);
+  font:inherit;font-size:12.5px;padding:8px 12px;border-radius:8px;cursor:pointer;
+  text-align:left;display:flex;justify-content:space-between;gap:10px}
+.btn:hover{border-color:var(--mute)}
+.btn kbd{font:400 10.5px var(--mono);color:var(--mute);background:var(--panel);
+  border:1px solid var(--grid);border-radius:4px;padding:0 5px}
+.btn.live{border-color:var(--master);color:var(--master)}
+.speed{display:grid;grid-template-columns:1fr 34px;align-items:center;gap:9px;
+  margin-top:11px;font-size:11.5px;color:var(--mute)}
+
+.notes{margin-top:22px;border-top:1px solid var(--grid);padding-top:18px;
+  color:var(--mute);font-size:13px;max-width:100ch}
+.notes b{color:#c3cbdd}
+.notes p{margin:0 0 9px}
+.notes code{font:400 12px var(--mono);color:#c3cbdd;background:var(--box);
+  border:1px solid var(--grid);border-radius:5px;padding:1px 5px}
+
+@media(max-width:1180px){
+  .stage{grid-template-columns:1fr}
+  .console{grid-template-columns:1fr 1fr}
+  .console .card:first-child{grid-column:1 / -1}
+}
+@media(max-width:720px){
+  .wrap{padding:16px 14px 50px}
+  .console{grid-template-columns:1fr}
+  .sliders{grid-template-columns:1fr}
+  .sl{grid-template-columns:110px 1fr 42px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Microbial Adaptive Learning Field</h1>
+<p class="lede">metabolism generates the variants &nbsp;&rarr;&nbsp; the environment selects among them
+  &nbsp;&rarr;&nbsp; the genome records the survivors &nbsp;&rarr;&nbsp; the record reshapes the next cycle.
+  <br>The background is the world &mdash; RGB <i>is</i> the trait being selected for. Each cell is drawn in the colour of
+  its own genome, so adaptation is literally the population turning the colour of the ground it stands on.</p>
+
+<div class="stage">
+  <div class="fieldbox">
+    <canvas id="field" width="700" height="700"></canvas>
+    <div class="readout" id="readout"></div>
+    <div class="binding" id="binding"></div>
+  </div>
+  <div class="panelbox">
+    <canvas id="panels" width="1180" height="700"></canvas>
+  </div>
+</div>
+
+<div class="console">
+  <div class="card">
+    <h2>Live parameters</h2>
+    <p class="hint"><i class="k-gen">blue = compute</i> &nbsp;&middot;&nbsp;
+      <i class="k-sel">amber = interface</i> &nbsp;&middot;&nbsp;
+      <i class="k-rec">green = record</i> &nbsp;&middot;&nbsp; every one is live, mid-run</p>
+    <div class="sliders" id="sliders"></div>
+  </div>
+
+  <div class="card">
+    <h2>Presets</h2>
+    <p class="hint">each one an operating point of the three-term system</p>
+    <div class="presets" id="presets"></div>
+  </div>
+
+  <div class="card">
+    <h2>Controls</h2>
+    <p class="hint">keys work anywhere on the page</p>
+    <div class="btns">
+      <button class="btn" data-act="pause">pause / run <kbd>space</kbd></button>
+      <button class="btn" data-act="shock">shock field <kbd>s</kbd></button>
+      <button class="btn" data-act="newfield">new field <kbd>n</kbd></button>
+      <button class="btn" data-act="reset">reset run <kbd>r</kbd></button>
+      <button class="btn" data-act="view">cycle view <kbd>v</kbd></button>
+    </div>
+    <div class="speed">
+      <input type="range" id="speed" min="1" max="6" step="1" value="1" style="--c:var(--master)">
+      <span id="speedval" style="font-family:var(--mono);text-align:right">1&times;</span>
+    </div>
+  </div>
+</div>
+
+<div class="notes">
+  <p><b>What the panels are for.</b> <i>Directed learning</i> is honest match to the world, measured against a fixed
+    yardstick so that flattening the selector cannot flatten the measuring stick along with it; the dashed line is the
+    gap between what the interface rewards and what is true. <i>Compute</i> is population volume and variants sampled
+    per tick &mdash; rate and breadth of search, never its direction. <i>Record</i> is genetic diversity against the
+    reachable variation still left. <i>Search efficiency</i> is match gained per 1,000 variants, which is the number
+    that separates compute from learning.</p>
+  <p><b>The binding constraint.</b> The lowest of the three bars is what the system is actually limited by at that
+    moment. Raising anything else is wasted. <code>blind-compute</code> pours out variants with the filter switched
+    off and learns nothing; <code>degraded-selector</code> keeps the loop turning while the field relaxes onto the
+    population's own mean; <code>frozen-record</code> holds a good match until you press <kbd>s</kbd> and shock the
+    field, which is the difference between having moved and having learned.</p>
+  <p>This is a direct port of <code>microbial_adaptive_learning_sim.py</code> &mdash; same mechanisms, same presets,
+    same diagnostics, running in the browser with no install.</p>
+</div>
+
+</div>
+
+<script>
+"use strict";
+/* ======================================================================== rng */
+function mulberry32(a){
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+let RAND = mulberry32(7), normSpare = null;
+function rnd(){ return RAND(); }
+function rnorm(){
+  if (normSpare !== null){ const v = normSpare; normSpare = null; return v; }
+  let u = 0, v = 0, s = 0;
+  do { u = rnd() * 2 - 1; v = rnd() * 2 - 1; s = u * u + v * v; } while (s >= 1 || s === 0);
+  const f = Math.sqrt(-2 * Math.log(s) / s);
+  normSpare = v * f;
+  return u * f;
+}
+
+/* ===================================================================== params */
+const BASE = {
+  grid: 140, genes: 3, env_mode: "patches", niches: 6, env_smooth: 9.0, seed: 7,
+  init_pop: 900, init_genome: "clonal", init_spread: "uniform",
+  init_energy: 0.55, max_pop: 4200,
+  // COMPUTE
+  efficiency: 1.00, uptake_max: 0.050, metabolic_cost: 0.0105,
+  repro_threshold: 1.00, base_death: 0.0015, lifespan: 900, motility: 0.55,
+  // INTERFACE
+  sel_sigma: 0.30, sel_pressure: 1.60, interface_noise: 0.00,
+  volatility: 0.0100, ou_theta: 0.01, self_ref: 0.00,
+  nutrient_regen: 0.015, nutrient_cap: 1.00,
+  // RECORD
+  mut_rate: 0.022, canalization: 0.010, plast_floor: 0.15,
+  hgt_rate: 0.010, hgt_radius: 6.0, hgt_frac: 0.50,
+  // divergence / convergence
+  stress_mut: 1.50, convergence: 1.00,
+  history: 1500
+};
+const METRIC_SIGMA = 0.30;
+
+const PRESETS = {
+  "balanced": {},
+  "blind-compute": { env_mode:"uniform", sel_sigma:2.5, sel_pressure:0.0,
+    efficiency:1.6, mut_rate:0.05, volatility:0.0, motility:0.0, hgt_rate:0.0,
+    nutrient_regen:0.05, base_death:0.010, init_genome:"diverse" },
+  "degraded-selector": { self_ref:0.045, interface_noise:0.22, volatility:0.0,
+    nutrient_regen:0.02 },
+  "frozen-record": { mut_rate:0.0, hgt_rate:0.0, volatility:0.018 },
+  "error-catastrophe": { mut_rate:0.16, canalization:0.0 },
+  "rich-interface": { env_mode:"mosaic", niches:8, env_smooth:3.0, sel_sigma:0.20,
+    sel_pressure:2.2, volatility:0.005, interface_noise:0.0, init_genome:"clonal" },
+  "sealed-medium": { volatility:0.0, nutrient_regen:0.006, canalization:0.05,
+    mut_rate:0.010 },
+  "hgt-cluster": { hgt_rate:0.12, hgt_frac:0.8, convergence:2.5, env_mode:"mosaic",
+    niches:5, mut_rate:0.015 }
+};
+const PRESET_NOTE = {
+  "balanced": "all three terms high",
+  "blind-compute": "volume, no selector",
+  "degraded-selector": "the filter goes blind",
+  "frozen-record": "nothing can be banked",
+  "error-catastrophe": "the record is erased",
+  "rich-interface": "honest, structured, moving",
+  "sealed-medium": "canalized, search shut down",
+  "hgt-cluster": "the lateral channel dominates"
+};
+const PRESET_ORDER = Object.keys(PRESETS);
+
+/* ====================================================================== blur */
+/* three box passes with wrap ~= a gaussian of the given sigma */
+function boxPassX(src, dst, w, h, r){
+  const inv = 1 / (2 * r + 1);
+  for (let y = 0; y < h; y++){
+    const o = y * w;
+    let sum = 0;
+    for (let k = -r; k <= r; k++) sum += src[o + ((k % w) + w) % w];
+    for (let x = 0; x < w; x++){
+      dst[o + x] = sum * inv;
+      sum += src[o + ((x + r + 1) % w)] - src[o + ((x - r + w) % w)];
+    }
+  }
+}
+function boxPassY(src, dst, w, h, r){
+  const inv = 1 / (2 * r + 1);
+  for (let x = 0; x < w; x++){
+    let sum = 0;
+    for (let k = -r; k <= r; k++) sum += src[(((k % h) + h) % h) * w + x];
+    for (let y = 0; y < h; y++){
+      dst[y * w + x] = sum * inv;
+      sum += src[((y + r + 1) % h) * w + x] - src[((y - r + h) % h) * w + x];
+    }
+  }
+}
+const _bufA = {}, _bufB = {};
+function blurWrap(plane, w, h, sigma){
+  if (sigma <= 0.3) return plane;
+  const n = w * h, key = n;
+  if (!_bufA[key]) { _bufA[key] = new Float32Array(n); _bufB[key] = new Float32Array(n); }
+  const a = _bufA[key], b = _bufB[key];
+  const r = Math.max(1, Math.round(sigma * 1.2));
+  boxPassX(plane, a, w, h, r); boxPassY(a, b, w, h, r);
+  boxPassX(b, a, w, h, r);     boxPassY(a, b, w, h, r);
+  boxPassX(b, a, w, h, r);     boxPassY(a, plane, w, h, r);
+  return plane;
+}
+function norm01(plane){
+  let lo = Infinity, hi = -Infinity;
+  for (let i = 0; i < plane.length; i++){ const v = plane[i]; if (v < lo) lo = v; if (v > hi) hi = v; }
+  if (hi > lo){ const d = 1 / (hi - lo); for (let i = 0; i < plane.length; i++) plane[i] = (plane[i] - lo) * d; }
+  else plane.fill(0.5);
+  return plane;
+}
+function wrapD(d, n){ d = Math.abs(d); return Math.min(d, n - d); }
+
+/* ===================================================================== field */
+class Field {
+  constructor(p){
+    this.p = p;
+    this.H = this.W = p.grid;
+    const n = this.H * this.W * 3;
+    this.env = new Float32Array(n);
+    this.env0 = new Float32Array(n);
+    this.rep = new Float32Array(n);
+    this.nutrient = new Float32Array(this.H * this.W).fill(p.nutrient_cap);
+    this.repIsEnv = true;
+    this._noise = new Float32Array(this.H * this.W);
+    this._acc = [new Float32Array(this.H * this.W), new Float32Array(this.H * this.W),
+                 new Float32Array(this.H * this.W)];
+    this._cnt = new Float32Array(this.H * this.W);
+    this.build(p.env_mode, this.env);
+    this.env0.set(this.env);
+    this.rep.set(this.env);
+  }
+  build(mode, out){
+    const H = this.H, W = this.W, G = 3, N = H * W;
+    if (mode === "uniform"){ out.fill(0.5); return out; }
+    if (mode === "noise"){ for (let i = 0; i < N * G; i++) out[i] = rnd(); return out; }
+    if (mode === "gradient"){
+      for (let g = 0; g < G; g++){
+        const a = 2 * Math.PI * g / G, ca = Math.cos(a), sa = Math.sin(a);
+        const plane = new Float32Array(N);
+        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++)
+          plane[y * W + x] = ca * (x / Math.max(W - 1, 1)) + sa * (y / Math.max(H - 1, 1));
+        norm01(plane);
+        for (let i = 0; i < N; i++) out[i * G + g] = plane[i];
+      }
+      return out;
+    }
+    if (mode === "mosaic"){
+      const k = Math.max(1, this.p.niches | 0);
+      const ys = [], xs = [], vals = [];
+      for (let i = 0; i < k; i++){
+        ys.push((rnd() * H) | 0); xs.push((rnd() * W) | 0);
+        vals.push([rnd(), rnd(), rnd()]);
+      }
+      const planes = [new Float32Array(N), new Float32Array(N), new Float32Array(N)];
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++){
+        let best = 0, bd = Infinity;
+        for (let i = 0; i < k; i++){
+          const dy = wrapD(y - ys[i], H), dx = wrapD(x - xs[i], W);
+          const d = dy * dy + dx * dx;
+          if (d < bd){ bd = d; best = i; }
+        }
+        const o = y * W + x;
+        for (let g = 0; g < G; g++) planes[g][o] = vals[best][g];
+      }
+      const s = this.p.env_smooth * 0.35;
+      for (let g = 0; g < G; g++){
+        blurWrap(planes[g], W, H, s);
+        for (let i = 0; i < N; i++) out[i * G + g] = Math.min(1, Math.max(0, planes[g][i]));
+      }
+      return out;
+    }
+    // default "patches": smoothed noise -> a continuous niche landscape
+    for (let g = 0; g < G; g++){
+      const plane = new Float32Array(N);
+      for (let i = 0; i < N; i++) plane[i] = rnorm();
+      blurWrap(plane, W, H, this.p.env_smooth);
+      norm01(plane);
+      for (let i = 0; i < N; i++) out[i * G + g] = plane[i];
+    }
+    return out;
+  }
+  reseed(){
+    this.build(this.p.env_mode, this.env);
+    this.env0.set(this.env); this.rep.set(this.env); this.repIsEnv = true;
+  }
+  shock(){
+    const tmp = new Float32Array(this.env.length);
+    this.build(this.p.env_mode, tmp);
+    for (let i = 0; i < this.env.length; i++)
+      this.env[i] = Math.min(1, Math.max(0, 0.35 * this.env[i] + 0.65 * tmp[i]));
+    this.env0.set(this.env); this.rep.set(this.env); this.repIsEnv = true;
+  }
+  step(cells){
+    const p = this.p, H = this.H, W = this.W, N = H * W, n3 = N * 3;
+    if (p.volatility > 0){
+      for (let g = 0; g < 3; g++){
+        const pl = this._noise;
+        for (let i = 0; i < N; i++) pl[i] = rnorm();
+        blurWrap(pl, W, H, p.env_smooth);
+        let m = 0; for (let i = 0; i < N; i++) m += pl[i]; m /= N;
+        let s = 0; for (let i = 0; i < N; i++){ const d = pl[i] - m; s += d * d; }
+        s = Math.sqrt(s / N) + 1e-9;
+        for (let i = 0; i < N; i++){
+          const k = i * 3 + g;
+          this.env[k] += p.ou_theta * (this.env0[k] - this.env[k]) + p.volatility * (pl[i] / s);
+        }
+      }
+    }
+    for (let i = 0; i < n3; i++) this.env[i] = this.env[i] < 0 ? 0 : (this.env[i] > 1 ? 1 : this.env[i]);
+
+    // the reported field: what selection actually acts on
+    if (p.self_ref > 0 && cells.n > 0){
+      this.repIsEnv = false;
+      for (let i = 0; i < n3; i++) this.rep[i] += 0.010 * (this.env[i] - this.rep[i]);
+      const acc = this._acc, cnt = this._cnt;
+      acc[0].fill(0); acc[1].fill(0); acc[2].fill(0); cnt.fill(0);
+      for (let i = 0; i < cells.n; i++){
+        const o = cells.iy[i] * W + cells.ix[i], gi = i * 3;
+        acc[0][o] += cells.g[gi]; acc[1][o] += cells.g[gi + 1]; acc[2][o] += cells.g[gi + 2];
+        cnt[o] += 1;
+      }
+      const sm = Math.max(p.env_smooth, 4.0);
+      blurWrap(acc[0], W, H, sm); blurWrap(acc[1], W, H, sm); blurWrap(acc[2], W, H, sm);
+      blurWrap(cnt, W, H, sm);
+      for (let i = 0; i < N; i++){
+        const c = cnt[i], w = Math.min(1, Math.max(0, c / 0.05));
+        if (w <= 0) continue;
+        const denom = Math.max(c, 1e-9);
+        for (let g = 0; g < 3; g++){
+          const k = i * 3 + g;
+          const mean = acc[g][i] / denom;
+          let v = this.rep[k] + p.self_ref * w * (mean - this.rep[k]);
+          this.rep[k] = v < 0 ? 0 : (v > 1 ? 1 : v);
+        }
+      }
+    } else {
+      this.rep.set(this.env);
+      this.repIsEnv = true;
+    }
+    const nut = this.nutrient;
+    for (let i = 0; i < N; i++) nut[i] += p.nutrient_regen * (p.nutrient_cap - nut[i]);
+  }
+  structure(){
+    const N = this.H * this.W;
+    let tot = 0;
+    for (let g = 0; g < 3; g++){
+      let m = 0; for (let i = 0; i < N; i++) m += this.env[i * 3 + g]; m /= N;
+      let s = 0; for (let i = 0; i < N; i++){ const d = this.env[i * 3 + g] - m; s += d * d; }
+      tot += Math.sqrt(s / N);
+    }
+    return Math.min(1, Math.max(0, (tot / 3) / 0.24));
+  }
+  reportDrift(){
+    if (this.repIsEnv) return 0;
+    let s = 0;
+    for (let i = 0; i < this.env.length; i++) s += Math.abs(this.rep[i] - this.env[i]);
+    return s / this.env.length;
+  }
+}
+
+/* ================================================================ population */
+const CAP = 11000;
+class Population {
+  constructor(p, fld){
+    this.p = p; this.fld = fld;
+    this.x = new Float32Array(CAP); this.y = new Float32Array(CAP);
+    this.g = new Float32Array(CAP * 3); this.e = new Float32Array(CAP);
+    this.age = new Int32Array(CAP); this.plast = new Float32Array(CAP * 3);
+    this.last = new Float32Array(CAP); this.head = new Float32Array(CAP);
+    this.match = new Float32Array(CAP); this.fit = new Float32Array(CAP);
+    this.ix = new Int32Array(CAP); this.iy = new Int32Array(CAP);
+    this._demand = new Float32Array(CAP);
+    this._tile = new Int32Array(CAP); this._order = new Int32Array(CAP);
+    this._lo = new Int32Array(CAP); this._cnt = new Int32Array(CAP);
+    this._demGrid = new Float32Array(fld.H * fld.W);
+    this.n = 0;
+    this.spawn(p.init_pop);
+  }
+  spawn(n){
+    const p = this.p, H = this.fld.H, W = this.fld.W;
+    n = Math.min(n, CAP);
+    this.n = n;
+    let cy = 0, cx = 0;
+    if (p.init_spread === "cluster"){ cy = rnd() * H; cx = rnd() * W; }
+    for (let i = 0; i < n; i++){
+      if (p.init_spread === "cluster"){
+        this.y[i] = Math.min(H - 1e-3, Math.max(0, cy + rnorm() * H * 0.06));
+        this.x[i] = Math.min(W - 1e-3, Math.max(0, cx + rnorm() * W * 0.06));
+      } else { this.y[i] = rnd() * H; this.x[i] = rnd() * W; }
+    }
+    this.index();
+    for (let i = 0; i < n; i++){
+      const o = i * 3;
+      for (let g = 0; g < 3; g++){
+        let v;
+        if (p.init_genome === "diverse") v = rnd();
+        else if (p.init_genome === "matched") v = this.fld.env[(this.iy[i] * W + this.ix[i]) * 3 + g] + rnorm() * 0.01;
+        else if (p.init_genome === "extreme") v = 0.05 + rnorm() * 0.01;
+        else v = 0.5 + rnorm() * 0.01;
+        this.g[o + g] = Math.min(1, Math.max(0, v));
+        this.plast[o + g] = 1;
+      }
+      this.e[i] = p.init_energy; this.age[i] = 0; this.last[i] = 0;
+      this.head[i] = rnd() * 2 * Math.PI; this.match[i] = 0; this.fit[i] = 0;
+    }
+  }
+  index(){
+    const W = this.fld.W, H = this.fld.H;
+    for (let i = 0; i < this.n; i++){
+      let xi = this.x[i] | 0, yi = this.y[i] | 0;
+      this.ix[i] = xi < 0 ? 0 : (xi > W - 1 ? W - 1 : xi);
+      this.iy[i] = yi < 0 ? 0 : (yi > H - 1 ? H - 1 : yi);
+    }
+  }
+  _move(dst, src){
+    this.x[dst] = this.x[src]; this.y[dst] = this.y[src];
+    const a = dst * 3, b = src * 3;
+    this.g[a] = this.g[b]; this.g[a+1] = this.g[b+1]; this.g[a+2] = this.g[b+2];
+    this.plast[a] = this.plast[b]; this.plast[a+1] = this.plast[b+1]; this.plast[a+2] = this.plast[b+2];
+    this.e[dst] = this.e[src]; this.age[dst] = this.age[src];
+    this.last[dst] = this.last[src]; this.head[dst] = this.head[src];
+    this.match[dst] = this.match[src]; this.fit[dst] = this.fit[src];
+    this.ix[dst] = this.ix[src]; this.iy[dst] = this.iy[src];
+  }
+  step(){
+    const p = this.p, fld = this.fld, W = fld.W, H = fld.H;
+    if (this.n === 0) return { variants: 0, intake: 0, hgt: 0 };
+    this.index();
+    const twoMS = 2 * METRIC_SIGMA * METRIC_SIGMA;
+    const twoSS = 2 * Math.max(p.sel_sigma, 1e-6) * Math.max(p.sel_sigma, 1e-6);
+    const noise = p.interface_noise;
+
+    // --- SELECTOR ---------------------------------------------------------
+    for (let i = 0; i < this.n; i++){
+      const o = i * 3, c = (this.iy[i] * W + this.ix[i]) * 3;
+      let dm = 0, dr = 0;
+      for (let g = 0; g < 3; g++){
+        const gene = this.g[o + g];
+        const dt = gene - fld.env[c + g]; dm += dt * dt;
+        let per = fld.rep[c + g];
+        if (noise > 0) per += rnorm() * noise;
+        const dp = gene - per; dr += dp * dp;
+      }
+      this.match[i] = Math.exp(-dm / twoMS);
+      this.fit[i] = Math.exp(-dr / twoSS);
+    }
+
+    // --- COMPUTE: intake under competition for the local resource ----------
+    const dem = this._demand, demGrid = this._demGrid;
+    demGrid.fill(0);
+    for (let i = 0; i < this.n; i++){
+      const d = p.uptake_max * Math.pow(this.fit[i], p.sel_pressure) * p.efficiency;
+      dem[i] = d;
+      demGrid[this.iy[i] * W + this.ix[i]] += d;
+    }
+    let intakeSum = 0;
+    for (let i = 0; i < this.n; i++){
+      const o = this.iy[i] * W + this.ix[i];
+      const tot = demGrid[o];
+      const share = tot > 1e-12 ? Math.min(1, fld.nutrient[o] / tot) : 1;
+      const got = dem[i] * share;
+      fld.nutrient[o] = Math.max(0, Math.min(p.nutrient_cap, fld.nutrient[o] - got));
+      this.e[i] += got - p.metabolic_cost;
+      this.age[i]++;
+      intakeSum += got;
+    }
+
+    // --- motility: run-and-tumble up the reward gradient -------------------
+    if (p.motility > 0){
+      for (let i = 0; i < this.n; i++){
+        if (this.fit[i] <= this.last[i]) this.head[i] = rnd() * 2 * Math.PI;
+        let nx = this.x[i] + p.motility * Math.cos(this.head[i]);
+        let ny = this.y[i] + p.motility * Math.sin(this.head[i]);
+        nx %= W; if (nx < 0) nx += W;
+        ny %= H; if (ny < 0) ny += H;
+        this.x[i] = nx; this.y[i] = ny;
+      }
+    }
+    for (let i = 0; i < this.n; i++) this.last[i] = this.fit[i];
+
+    // --- mortality ---------------------------------------------------------
+    let k = 0;
+    for (let i = 0; i < this.n; i++){
+      const alive = this.e[i] > 0 && this.age[i] < p.lifespan && rnd() > p.base_death;
+      if (alive){ if (k !== i) this._move(k, i); k++; }
+    }
+    this.n = k;
+    if (this.n === 0) return { variants: 0, intake: intakeSum, hgt: 0 };
+
+    const variants = this._replicate();
+    const hgt = this._transfer();
+
+    // --- carrying capacity --------------------------------------------------
+    if (this.n > p.max_pop){
+      // random thinning: partial Fisher-Yates over an index list
+      const idx = new Int32Array(this.n);
+      for (let i = 0; i < this.n; i++) idx[i] = i;
+      for (let i = 0; i < p.max_pop; i++){
+        const j = i + ((rnd() * (this.n - i)) | 0);
+        const t = idx[i]; idx[i] = idx[j]; idx[j] = t;
+      }
+      const keep = new Uint8Array(this.n);
+      for (let i = 0; i < p.max_pop; i++) keep[idx[i]] = 1;
+      let w = 0;
+      for (let i = 0; i < this.n; i++) if (keep[i]){ if (w !== i) this._move(w, i); w++; }
+      this.n = w;
+    }
+    return { variants: variants, intake: intakeSum, hgt: hgt };
+  }
+  _replicate(){
+    const p = this.p, W = this.fld.W, H = this.fld.H;
+    const room = Math.max(0, Math.min(CAP, Math.floor(p.max_pop * 1.15)) - this.n);
+    if (room === 0) return 0;
+    let born = 0;
+    const n0 = this.n;
+    for (let i = 0; i < n0 && born < room; i++){
+      if (this.e[i] < p.repro_threshold) continue;
+      this.e[i] *= 0.5;
+      const c = this.n, o = c * 3, s = i * 3;
+      const reward = this.fit[i];
+      const stress = 1.0 + p.stress_mut * (1.0 - reward);
+      for (let g = 0; g < 3; g++){
+        const sd = p.mut_rate * this.plast[s + g] * stress;
+        let v = this.g[s + g] + rnorm() * sd;
+        this.g[o + g] = v < 0 ? 0 : (v > 1 ? 1 : v);
+        // the record as boundary condition: loci held by strong selection
+        // lose reachable variation
+        let pl = this.plast[s + g] * (1 - p.canalization * reward);
+        this.plast[o + g] = pl < p.plast_floor ? p.plast_floor : (pl > 1 ? 1 : pl);
+      }
+      let nx = this.x[i] + rnorm() * 0.6, ny = this.y[i] + rnorm() * 0.6;
+      nx %= W; if (nx < 0) nx += W;
+      ny %= H; if (ny < 0) ny += H;
+      this.x[c] = nx; this.y[c] = ny;
+      this.e[c] = this.e[i]; this.age[c] = 0; this.last[c] = reward;
+      this.head[c] = rnd() * 2 * Math.PI;
+      this.match[c] = this.match[i]; this.fit[c] = this.fit[i];
+      this.ix[c] = this.ix[i]; this.iy[c] = this.iy[i];
+      this.n++; born++;
+    }
+    if (born) this.index();
+    return born;
+  }
+  _transfer(){
+    const p = this.p;
+    if (p.hgt_rate <= 0 || this.n < 2) return 0;
+    const r = Math.max(p.hgt_radius, 1.0);
+    const ntx = Math.ceil(this.fld.W / r);
+    const tile = this._tile, order = this._order, lo = this._lo, cnt = this._cnt;
+    for (let i = 0; i < this.n; i++)
+      tile[i] = ((this.y[i] / r) | 0) * ntx + ((this.x[i] / r) | 0);
+    // counting sort by tile
+    const buckets = new Map();
+    for (let i = 0; i < this.n; i++){
+      const t = tile[i];
+      let b = buckets.get(t);
+      if (!b){ b = []; buckets.set(t, b); }
+      b.push(i);
+    }
+    let w = 0;
+    const start = new Map();
+    for (const [t, b] of buckets){
+      start.set(t, w);
+      for (let j = 0; j < b.length; j++) order[w++] = b[j];
+    }
+    for (let i = 0; i < this.n; i++){
+      const t = tile[i];
+      lo[i] = start.get(t);
+      cnt[i] = buckets.get(t).length;
+    }
+    let events = 0;
+    for (let i = 0; i < this.n; i++){
+      if (cnt[i] <= 1) continue;
+      // convergence: dense, high-fitness hubs integrate faster
+      const boost = 1.0 + p.convergence * Math.min(1, cnt[i] / 25.0);
+      const prob = Math.min(1, Math.max(0, p.hgt_rate * boost));
+      if (rnd() >= prob) continue;
+      const pick = lo[i] + ((rnd() * cnt[i]) | 0);
+      const don = order[Math.min(pick, lo[i] + cnt[i] - 1)];
+      if (this.fit[don] <= this.fit[i]) continue;   // adopt only from the better-rewarded
+      const a = i * 3, b = don * 3;
+      for (let g = 0; g < 3; g++) if (rnd() < p.hgt_frac) this.g[a + g] = this.g[b + g];
+      events++;
+    }
+    return events;
+  }
+}
+
+/* ======================================================================== sim */
+class Sim {
+  constructor(p){ this.p0 = Object.assign({}, p); this.reset(p, true); }
+  reset(p, newField){
+    if (p) this.p = Object.assign({}, p);
+    RAND = mulberry32(this.p.seed); normSpare = null;
+    if (newField || !this.fld) this.fld = new Field(this.p);
+    else { this.fld.p = this.p; this.fld.nutrient.fill(this.p.nutrient_cap); }
+    this.cells = new Population(this.p, this.fld);
+    this.t = 0; this.cumVariants = 0; this.cumHgt = 0;
+    this.hist = { t:[], pop:[], match:[], gap:[], div:[], plast:[], variants:[],
+                  hgt:[], eff:[], compute:[], interface:[], record:[] };
+    this._mPrev = 0;
+  }
+  apply(kw){ Object.assign(this.p, kw); this.fld.p = this.p; this.cells.p = this.p; }
+  step(){
+    this.fld.step(this.cells);
+    const out = this.cells.step();
+    this.t++;
+    this.cumVariants += out.variants;
+    this.cumHgt += out.hgt;
+    this._record(out);
+  }
+  _record(out){
+    const p = this.p, c = this.cells, n = c.n;
+    let m = 0, gap = 0, pl = 0;
+    const mean = [0, 0, 0];
+    if (n){
+      for (let i = 0; i < n; i++){
+        m += c.match[i]; gap += c.last[i] - c.match[i];
+        const o = i * 3;
+        pl += (c.plast[o] + c.plast[o+1] + c.plast[o+2]) / 3;
+        mean[0] += c.g[o]; mean[1] += c.g[o+1]; mean[2] += c.g[o+2];
+      }
+      m /= n; gap /= n; pl /= n;
+      mean[0] /= n; mean[1] /= n; mean[2] /= n;
+    }
+    let div = 0;
+    if (n){
+      for (let g = 0; g < 3; g++){
+        let s = 0;
+        for (let i = 0; i < n; i++){ const d = c.g[i * 3 + g] - mean[g]; s += d * d; }
+        div += Math.sqrt(s / n);
+      }
+      div /= 3;
+    }
+
+    // --- the three terms, each normalised to 0..1 -------------------------
+    const compute = Math.min(1, Math.max(0, out.variants / (0.045 * p.max_pop + 1e-9)));
+    const sharp  = Math.min(1, Math.max(0, 0.32 / Math.max(p.sel_sigma, 1e-6)));
+    const press  = Math.min(1, Math.max(0, p.sel_pressure / 1.5));
+    const honest = Math.min(1, Math.max(0, 1 - p.interface_noise / 0.30));
+    const sealed = Math.min(1, Math.max(0, 1 - p.self_ref / 0.05));
+    const iface  = this.fld.structure() * sharp * press * honest * sealed;
+    const effMut = p.mut_rate * pl;
+    let record = Math.exp(-Math.pow(effMut / 0.075, 2)) * (1 - Math.exp(-effMut / 0.006));
+    record *= Math.min(1, Math.max(0, 0.3 + 0.7 * (n / Math.max(p.max_pop * 0.15, 1))));
+
+    const h = this.hist;
+    h.t.push(this.t); h.pop.push(n); h.match.push(m); h.gap.push(gap);
+    h.div.push(div); h.plast.push(pl); h.variants.push(out.variants); h.hgt.push(out.hgt);
+    h.eff.push(1000 * (m - this._mPrev) / Math.max(out.variants, 1));
+    this._mPrev = m;
+    h.compute.push(compute); h.interface.push(iface); h.record.push(record);
+    if (h.t.length > p.history) for (const k in h) h[k].splice(0, h[k].length - p.history);
+  }
+  terms(){
+    const h = this.hist, w = Math.min(40, h.t.length);
+    if (!w) return [0, 0, 0];
+    const avg = a => { let s = 0; for (let i = a.length - w; i < a.length; i++) s += a[i]; return s / w; };
+    return [avg(h.compute), avg(h.interface), avg(h.record)];
+  }
+  binding(){
+    const v = this.terms(), names = ["COMPUTE", "INTERFACE", "RECORD"];
+    let k = 0;
+    for (let i = 1; i < 3; i++) if (v[i] < v[k]) k = i;
+    return [names[k], v[k]];
+  }
+  learningRate(){
+    const mm = this.hist.match;
+    if (mm.length < 60) return 0;
+    let a = 0, b = 0;
+    for (let i = mm.length - 30; i < mm.length; i++) a += mm[i];
+    for (let i = mm.length - 60; i < mm.length - 30; i++) b += mm[i];
+    return ((a - b) / 30) / 30;
+  }
+}
+
+/* ===================================================================== colour */
+const MAGMA = [[0,0,4],[28,16,68],[79,18,123],[129,37,129],[181,54,122],
+               [229,80,100],[251,135,97],[254,194,135],[252,253,191]];
+function magma(t){
+  t = t < 0 ? 0 : (t > 1 ? 1 : t);
+  const f = t * (MAGMA.length - 1), i = Math.min(MAGMA.length - 2, f | 0), a = f - i;
+  const c0 = MAGMA[i], c1 = MAGMA[i + 1];
+  return [(c0[0] + (c1[0] - c0[0]) * a) | 0,
+          (c0[1] + (c1[1] - c0[1]) * a) | 0,
+          (c0[2] + (c1[2] - c0[2]) * a) | 0];
+}
+
+/* ====================================================================== views */
+const VIEWS = [["world","genome"], ["world","match"], ["reported","genome"],
+               ["nutrient","genome"], ["dark","match"]];
+
+/* ======================================================================== app */
+const SPECS = [
+  ["efficiency",      "energy efficiency",   0.1,  3.0,   0.01,  "gen"],
+  ["uptake_max",      "uptake / metabolism", 0.01, 0.15,  0.001, "gen"],
+  ["motility",        "motility",            0.0,  2.0,   0.01,  "gen"],
+  ["max_pop",         "carrying capacity",   200,  8000,  50,    "gen"],
+  ["nutrient_regen",  "nutrient regen",      0.0,  0.06,  0.001, "sel"],
+  ["sel_sigma",       "selection width",     0.04, 2.5,   0.01,  "sel"],
+  ["sel_pressure",    "selection pressure",  0.0,  5.0,   0.05,  "sel"],
+  ["interface_noise", "interface noise",     0.0,  0.45,  0.005, "sel"],
+  ["volatility",      "env volatility",      0.0,  0.03,  0.0005,"sel"],
+  ["self_ref",        "self-reference drag", 0.0,  0.08,  0.001, "warn"],
+  ["mut_rate",        "mutation rate",       0.0,  0.20,  0.001, "rec"],
+  ["canalization",    "canalization",        0.0,  0.08,  0.001, "rec"],
+  ["hgt_rate",        "HGT rate",            0.0,  0.30,  0.005, "rec"],
+  ["hgt_frac",        "HGT loci fraction",   0.0,  1.0,   0.01,  "rec"],
+  ["stress_mut",      "divergence (stress)", 0.0,  5.0,   0.05,  "ink"],
+  ["convergence",     "convergence (hubs)",  0.0,  4.0,   0.05,  "ink"]
+];
+const COLS = { gen:"var(--gen)", sel:"var(--sel)", rec:"var(--rec)",
+               warn:"var(--warn)", ink:"var(--mute)" };
+const TERM_COL = { COMPUTE:"#4f8ef7", INTERFACE:"#e8a05a", RECORD:"#5fd0a0" };
+
+const field = document.getElementById("field"), fx = field.getContext("2d");
+const panels = document.getElementById("panels"), px = panels.getContext("2d");
+const readout = document.getElementById("readout");
+const bindingEl = document.getElementById("binding");
+
+let baseParams = Object.assign({}, BASE);
+let presetName = "balanced";
+let sim = new Sim(Object.assign({}, BASE));
+let paused = false, view = 0, spf = 1;
+
+const buf = document.createElement("canvas");
+buf.width = buf.height = BASE.grid;
+const bx = buf.getContext("2d");
+let imgData = bx.createImageData(BASE.grid, BASE.grid);
+
+/* -------------------------------------------------------------- build the UI */
+const slidersEl = document.getElementById("sliders");
+const sliderEls = {};
+SPECS.forEach(([attr, label, lo, hi, stp, col]) => {
+  const row = document.createElement("div");
+  row.className = "sl";
+  row.innerHTML = '<label title="' + label + '">' + label + '</label>' +
+    '<input type="range" min="' + lo + '" max="' + hi + '" step="' + stp + '" ' +
+    'style="--c:' + COLS[col] + '"><output></output>';
+  const input = row.querySelector("input"), out = row.querySelector("output");
+  input.value = sim.p[attr];
+  out.textContent = fmt(attr, sim.p[attr]);
+  input.addEventListener("input", () => {
+    const v = attr === "max_pop" ? (+input.value | 0) : +input.value;
+    out.textContent = fmt(attr, v);
+    const kw = {}; kw[attr] = v; sim.apply(kw);
+  });
+  slidersEl.appendChild(row);
+  sliderEls[attr] = { input, out };
+});
+function fmt(attr, v){
+  if (attr === "max_pop") return String(v | 0);
+  if (v >= 1) return v.toFixed(2);
+  if (v === 0) return "0";
+  return v < 0.01 ? v.toFixed(4) : v.toFixed(3);
+}
+function syncSliders(){
+  for (const attr in sliderEls){
+    const el = sliderEls[attr], v = sim.p[attr];
+    el.input.value = v;
+    el.out.textContent = fmt(attr, +el.input.value);
+  }
+}
+
+const presetsEl = document.getElementById("presets");
+PRESET_ORDER.forEach(name => {
+  const b = document.createElement("button");
+  b.className = "preset" + (name === presetName ? " on" : "");
+  b.dataset.name = name;
+  b.innerHTML = '<span class="dot"></span><span>' + name +
+    '<small>' + PRESET_NOTE[name] + '</small></span>';
+  b.addEventListener("click", () => applyPreset(name));
+  presetsEl.appendChild(b);
+});
+function applyPreset(name){
+  presetName = name;
+  // rebuild from the pristine baseline so presets do not stack
+  const p = Object.assign({}, baseParams, PRESETS[name]);
+  sim.reset(p, true);
+  syncSliders();
+  document.querySelectorAll(".preset").forEach(el =>
+    el.classList.toggle("on", el.dataset.name === name));
+}
+
+document.querySelectorAll(".btn").forEach(b =>
+  b.addEventListener("click", () => act(b.dataset.act)));
+function act(a){
+  if (a === "pause"){ paused = !paused;
+    document.querySelector('[data-act="pause"]').classList.toggle("live", paused); }
+  else if (a === "shock") sim.fld.shock();
+  else if (a === "newfield") sim.fld.reseed();
+  else if (a === "reset") sim.reset(sim.p, true);
+  else if (a === "view") view = (view + 1) % VIEWS.length;
+}
+const speed = document.getElementById("speed"), speedval = document.getElementById("speedval");
+speed.addEventListener("input", () => { spf = +speed.value; speedval.textContent = spf + "×"; });
+
+document.addEventListener("keydown", e => {
+  if (e.target.tagName === "INPUT") return;
+  const k = e.key;
+  if (k === " "){ e.preventDefault(); act("pause"); }
+  else if (k === "s") act("shock");
+  else if (k === "n") act("newfield");
+  else if (k === "r") act("reset");
+  else if (k === "v") act("view");
+  else if (k >= "1" && k <= "8") applyPreset(PRESET_ORDER[+k - 1]);
+});
+
+/* ------------------------------------------------------------------ renderer */
+function drawField(){
+  const s = sim, c = s.cells, H = s.fld.H, W = s.fld.W;
+  const [bgmode, cmode] = VIEWS[view];
+  const d = imgData.data;
+  for (let y = 0; y < H; y++){
+    const sy = H - 1 - y;                      // origin lower, like the Python view
+    for (let x = 0; x < W; x++){
+      const o = (y * W + x) * 3, q = (sy * W + x) * 4;
+      let r, g, b;
+      if (bgmode === "world"){ r = s.fld.env[o]; g = s.fld.env[o+1]; b = s.fld.env[o+2]; }
+      else if (bgmode === "reported"){ r = s.fld.rep[o]; g = s.fld.rep[o+1]; b = s.fld.rep[o+2]; }
+      else if (bgmode === "nutrient"){
+        const n = s.fld.nutrient[y * W + x] / Math.max(s.p.nutrient_cap, 1e-9);
+        r = n * 0.25; g = n * 0.55; b = n * 0.35;
+      } else { r = s.fld.env[o] * 0.28; g = s.fld.env[o+1] * 0.28; b = s.fld.env[o+2] * 0.28; }
+      d[q]   = (r * 255) | 0; d[q+1] = (g * 255) | 0; d[q+2] = (b * 255) | 0; d[q+3] = 255;
+    }
+  }
+  bx.putImageData(imgData, 0, 0);
+  fx.imageSmoothingEnabled = true;
+  fx.drawImage(buf, 0, 0, field.width, field.height);
+
+  const sx = field.width / W, sy2 = field.height / H;
+  fx.lineWidth = 0.6;
+  fx.strokeStyle = "rgba(0,0,0,.35)";
+  for (let i = 0; i < c.n; i++){
+    const o = i * 3;
+    let col;
+    if (cmode === "genome"){
+      col = "rgb(" + ((c.g[o] * 255) | 0) + "," + ((c.g[o+1] * 255) | 0) + "," +
+            ((c.g[o+2] * 255) | 0) + ")";
+    } else {
+      const m = magma(c.match[i]);
+      col = "rgb(" + m[0] + "," + m[1] + "," + m[2] + ")";
+    }
+    const rad = 1.4 + 1.9 * Math.min(1.2, Math.max(0, c.e[i]));
+    const cxp = c.x[i] * sx, cyp = field.height - c.y[i] * sy2;
+    fx.fillStyle = col;
+    fx.beginPath();
+    fx.arc(cxp, cyp, rad, 0, 6.2832);
+    fx.fill();
+    fx.stroke();
+  }
+
+  const m = c.n ? avgArr(c.match, c.n) : 0;
+  const lr = sim.learningRate();
+  readout.textContent =
+    "tick " + pad(sim.t, 6) + "   pop " + pad(c.n, 5) + "   true match " + m.toFixed(3) +
+    "   learn/tick " + (lr >= 0 ? "+" : "") + lr.toExponential(2) + "\n" +
+    "variants " + pad(sim.cumVariants.toLocaleString(), 9) + "   HGT " +
+    pad(sim.cumHgt.toLocaleString(), 8) + "   selector drift " +
+    sim.fld.reportDrift().toFixed(3) + "   view " + bgmode + "/" + cmode;
+  const [bn, bv] = sim.binding();
+  bindingEl.textContent = "BINDING CONSTRAINT: " + bn + "  (" + bv.toFixed(2) + ")";
+  bindingEl.style.background = TERM_COL[bn] + "dd";
+}
+function avgArr(a, n){ let s = 0; for (let i = 0; i < n; i++) s += a[i]; return s / n; }
+function pad(v, w){ v = String(v); return " ".repeat(Math.max(0, w - v.length)) + v; }
+
+/* -------------------------------------------------------------------- panels */
+const GRIDC = "#26304a", MUTE = "#7c87a3";
+function panelRect(i){
+  const W = panels.width, H = panels.height, pad = 10;
+  const heights = [0.245, 0.245, 0.245, 0.16, 0.105];
+  let y = pad;
+  for (let k = 0; k < i; k++) y += heights[k] * (H - 2 * pad);
+  return { x: 54, y: y, w: W - 70, h: heights[i] * (H - 2 * pad) - 24 };
+}
+function axis(r, title){
+  px.fillStyle = "#0e1322";
+  px.fillRect(r.x, r.y, r.w, r.h);
+  px.strokeStyle = GRIDC; px.lineWidth = 1;
+  px.strokeRect(r.x + .5, r.y + .5, r.w, r.h);
+  px.fillStyle = MUTE;
+  px.font = "11px ui-monospace,Consolas,monospace";
+  px.textAlign = "left"; px.textBaseline = "alphabetic";
+  px.fillText(title, r.x, r.y - 6);
+}
+function line(r, arr, lo, hi, color, width, dash, alpha){
+  const n = arr.length;
+  if (n < 2) return;
+  px.save();
+  px.globalAlpha = alpha === undefined ? 1 : alpha;
+  px.strokeStyle = color; px.lineWidth = width;
+  px.setLineDash(dash ? [4, 3] : []);
+  px.beginPath();
+  const span = (hi - lo) || 1;
+  const step = Math.max(1, Math.floor(n / r.w));
+  for (let i = 0; i < n; i += step){
+    const X = r.x + (i / (n - 1)) * r.w;
+    const Y = r.y + r.h - ((arr[i] - lo) / span) * r.h;
+    i === 0 ? px.moveTo(X, Y) : px.lineTo(X, Y);
+  }
+  px.stroke();
+  px.restore();
+}
+function yticks(r, lo, hi, color){
+  px.fillStyle = color || MUTE;
+  px.font = "10px ui-monospace,Consolas,monospace";
+  px.textAlign = "right"; px.textBaseline = "middle";
+  for (let k = 0; k <= 2; k++){
+    const v = lo + (hi - lo) * k / 2;
+    const Y = r.y + r.h - (k / 2) * r.h;
+    px.fillText(fmtTick(v), r.x - 6, Y);
+    px.strokeStyle = GRIDC; px.globalAlpha = .45;
+    px.beginPath(); px.moveTo(r.x, Y + .5); px.lineTo(r.x + r.w, Y + .5); px.stroke();
+    px.globalAlpha = 1;
+  }
+}
+function fmtTick(v){
+  const a = Math.abs(v);
+  if (a >= 1000) return (v / 1000).toFixed(1) + "k";
+  if (a >= 10) return v.toFixed(0);
+  if (a >= 1) return v.toFixed(1);
+  if (a === 0) return "0";
+  return v.toFixed(a < 0.1 ? 3 : 2);
+}
+function maxOf(a, floor){ let m = floor; for (let i = 0; i < a.length; i++) if (a[i] > m) m = a[i]; return m; }
+
+function drawPanels(){
+  const h = sim.hist;
+  px.fillStyle = "#121726";
+  px.fillRect(0, 0, panels.width, panels.height);
+  if (!h.t.length) return;
+
+  // 1 — directed learning
+  let r = panelRect(0);
+  axis(r, "DIRECTED LEARNING    honest match to the world (solid)  /  reward-minus-truth gap (dashed)");
+  yticks(r, -0.25, 1.02);
+  line(r, h.match, -0.25, 1.02, "#e8a05a", 1.8);
+  line(r, h.gap, -0.25, 1.02, "#e0556b", 1.1, true);
+
+  // 2 — compute
+  r = panelRect(1);
+  axis(r, "COMPUTE    population volume (solid)  /  variants sampled per tick (faint)");
+  const popMax = Math.max(maxOf(h.pop, 10) * 1.15, 10);
+  yticks(r, 0, popMax);
+  line(r, h.pop, 0, popMax, "#4f8ef7", 1.8);
+  line(r, h.variants, 0, Math.max(maxOf(h.variants, 5) * 1.2, 5), "#4f8ef7", 1, false, .38);
+
+  // 3 — record
+  r = panelRect(2);
+  axis(r, "RECORD    genetic diversity (solid)  /  reachable variation still left, i.e. plasticity (dashed)");
+  const divMax = Math.max(maxOf(h.div, .05) * 1.25, .05);
+  yticks(r, 0, divMax);
+  line(r, h.div, 0, divMax, "#5fd0a0", 1.8);
+  line(r, h.plast, 0, 1.05, "#5fd0a0", 1.1, true, .6);
+
+  // 4 — search efficiency (smoothed, robust limits)
+  r = panelRect(3);
+  axis(r, "SEARCH EFFICIENCY    match gained per 1000 variants  ←  this is what separates compute from learning");
+  const w = 60, e = h.eff, sm = new Float64Array(e.length);
+  if (e.length > w){
+    let run = 0;
+    for (let i = 0; i < e.length; i++){
+      run += e[i];
+      if (i >= w) run -= e[i - w];
+      sm[i] = run / Math.min(i + 1, w);
+    }
+  } else for (let i = 0; i < e.length; i++) sm[i] = e[i];
+  const abs = Array.from(sm, Math.abs).sort((a, b) => a - b);
+  const p97 = abs.length ? abs[Math.min(abs.length - 1, Math.floor(abs.length * 0.97))] : 0;
+  const lim = Math.max(p97 * 1.6, 1e-4);
+  yticks(r, -lim, lim);
+  line(r, sm, -lim, lim, "#e8ecf6", 1.3);
+
+  // 5 — the three terms
+  r = panelRect(4);
+  axis(r, "THE THREE TERMS    the lowest bar is the binding constraint");
+  const v = sim.terms(), names = ["COMPUTE", "INTERFACE", "RECORD"];
+  const bh = r.h / 3.6;
+  for (let i = 0; i < 3; i++){
+    const Y = r.y + 6 + i * (r.h - 10) / 3;
+    px.fillStyle = TERM_COL[names[i]];
+    px.fillRect(r.x + 2, Y, Math.max(1, v[i] * (r.w - 4)), bh);
+    px.fillStyle = "#e8ecf6";
+    px.font = "10px ui-monospace,Consolas,monospace";
+    px.textAlign = "left"; px.textBaseline = "middle";
+    px.fillText(names[i] + "  " + v[i].toFixed(2), r.x + 8, Y + bh / 2);
+  }
+}
+
+/* --------------------------------------------------------------------- loop */
+function frame(){
+  if (!paused) for (let i = 0; i < spf; i++) sim.step();
+  drawField();
+  drawPanels();
+  requestAnimationFrame(frame);
+}
+syncSliders();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

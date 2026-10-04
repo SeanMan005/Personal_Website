@@ -1,0 +1,678 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="The AI mass-to-energy converter drawn as a sectional engine cutaway, with thirteen clickable stations.">
+<style>
+  :root{
+    color-scheme: light;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  html, body{ margin:0; }
+  img{ max-width:100%; }
+  [hidden]{ display:none !important; }
+</style>
+<title>AI Engine Block Diagram</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap">
+<style>
+  :root{
+    --bg:#E9EAEC; --surface:#FFFFFF; --surface-2:#F2F3F6; --sunk:#DEE0E5;
+    --ink:#15181E; --muted:#5B6270; --line:#C4C9D2; --line-strong:#8D95A3;
+    --accent:#AF471B; --signal:#1B6C86; --warn:#8A6300;
+    --tint:rgba(175,71,27,.08); --grid:rgba(21,24,30,.055);
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif;
+    --serif:"Newsreader",Georgia,"Times New Roman",serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme:dark;
+      --bg:#0E1115; --surface:#161A21; --surface-2:#1B212A; --sunk:#12161C;
+      --ink:#E3E7ED; --muted:#98A0AE; --line:#2B323C; --line-strong:#556070;
+      --accent:#E27A48; --signal:#59B6D0; --warn:#C9A227;
+      --tint:rgba(226,122,72,.14); --grid:rgba(227,231,237,.05);
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme:dark;
+    --bg:#0E1115; --surface:#161A21; --surface-2:#1B212A; --sunk:#12161C;
+    --ink:#E3E7ED; --muted:#98A0AE; --line:#2B323C; --line-strong:#556070;
+    --accent:#E27A48; --signal:#59B6D0; --warn:#C9A227;
+    --tint:rgba(226,122,72,.14); --grid:rgba(227,231,237,.05);
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:var(--sans); font-size:15px; line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1180px; margin:0 auto; padding-inline:16px; padding-block:24px 56px}
+
+  .titleblock{border:1px solid var(--line-strong); background:var(--surface)}
+  .tb-main{padding:18px 20px 16px; border-bottom:1px solid var(--line)}
+  .tb-eyebrow{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin:0 0 6px}
+  h1{font-family:var(--sans); font-weight:600; font-size:clamp(25px,4.4vw,38px); line-height:1.08; letter-spacing:-.015em; margin:0; text-wrap:balance}
+  .tb-sub{font-family:var(--serif); font-size:17px; color:var(--muted); margin:10px 0 0; max-width:64ch}
+  .tb-meta{display:grid; grid-template-columns:repeat(4,1fr); font-family:var(--mono); font-size:11px}
+  .tb-meta div{padding:9px 12px; border-right:1px solid var(--line); min-width:0}
+  .tb-meta div:last-child{border-right:0}
+  .tb-meta b{display:block; color:var(--muted); font-weight:400; letter-spacing:.1em; text-transform:uppercase; font-size:10px}
+  .tb-meta span{display:block; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  @media (max-width:560px){ .tb-meta{grid-template-columns:repeat(2,1fr)} .tb-meta div:nth-child(2){border-right:0} }
+
+  section{margin-top:22px}
+  .card{border:1px solid var(--line-strong); background:var(--surface)}
+  .card-hd{
+    display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap;
+    padding:10px 14px; border-bottom:1px solid var(--line);
+    font-family:var(--mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted);
+  }
+  .card-hd b{color:var(--ink); font-weight:500; letter-spacing:.12em}
+
+  .figure{
+    background:
+      linear-gradient(var(--grid) 1px, transparent 1px) 0 0/26px 26px,
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0/26px 26px,
+      var(--surface-2);
+    overflow-x:auto; padding:6px 0;
+  }
+  svg.engine{display:block; width:1400px; max-width:none; height:auto; margin:0 auto}
+  @media (min-width:1220px){ svg.engine{width:100%; max-width:1400px} }
+
+  .ln{fill:none; stroke:var(--line-strong); stroke-width:1.8; stroke-linejoin:round; stroke-linecap:round}
+  .ln.thin{stroke:var(--line); stroke-width:1.3}
+  .ln.dash{stroke-dasharray:7 5}
+  .axis{stroke:var(--line); stroke-width:1; stroke-dasharray:14 6 3 6}
+  .node{cursor:pointer}
+  .node *{pointer-events:none}
+  .node .hit{pointer-events:all; fill:transparent; stroke:transparent}
+  .node:focus{outline:none}
+  .node:hover .ln, .node:focus-visible .ln{stroke:var(--accent)}
+  .node.is-active .ln{stroke:var(--accent); stroke-width:2.6}
+  .node.is-active .ln.thin{stroke-width:1.8}
+  .node.is-active .fillzone{fill:var(--tint)}
+  .fillzone{fill:transparent}
+  .bdg{fill:var(--surface); stroke:var(--line-strong); stroke-width:1.4}
+  .bdgn{font-family:var(--mono); font-size:10px; fill:var(--muted); text-anchor:middle; dominant-baseline:central}
+  .node:hover .bdg{stroke:var(--accent)}
+  .node.is-active .bdg{fill:var(--accent); stroke:var(--accent)}
+  .node.is-active .bdgn{fill:var(--surface)}
+  .cap{font-family:var(--mono); font-size:10px; letter-spacing:.11em; fill:var(--muted); text-transform:uppercase}
+  .cap.mid{text-anchor:middle}
+  .cap.end{text-anchor:end}
+  .node.is-active .cap{fill:var(--accent)}
+  .flowdot{fill:var(--signal)}
+  .stamp{font-family:var(--mono); font-size:10px; letter-spacing:.14em; fill:var(--muted); text-transform:uppercase}
+
+  .grid2{display:grid; grid-template-columns:1.25fr 1fr; gap:22px; align-items:start; margin-top:22px}
+  @media (max-width:860px){ .grid2{grid-template-columns:1fr} }
+
+  .panel-body{padding:18px 20px 22px}
+  .p-desig{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin:0}
+  .p-name{font-family:var(--sans); font-weight:600; font-size:24px; letter-spacing:-.01em; margin:6px 0 0; text-wrap:balance}
+  .p-tf{font-family:var(--mono); font-size:12.5px; color:var(--ink); background:var(--sunk); border:1px solid var(--line); padding:7px 10px; display:inline-block; margin:12px 0 0}
+  .p-text{font-family:var(--serif); font-size:17px; line-height:1.62; margin:14px 0 0; max-width:60ch}
+  .p-fail{margin-top:16px; border-top:1px solid var(--line); padding-top:12px; display:grid; grid-template-columns:auto 1fr; gap:10px 12px; align-items:start}
+  .p-fail dt{font-family:var(--mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); padding-top:3px; white-space:nowrap}
+  .p-fail dd{margin:0; font-size:14.5px; line-height:1.5}
+  .p-fail dd.bad{color:var(--accent)}
+
+  .console-body{padding:16px 18px 20px}
+  .ctl{margin-bottom:16px}
+  .ctl-top{display:flex; justify-content:space-between; align-items:baseline; gap:10px}
+  .ctl label{font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink)}
+  .ctl output{font-family:var(--mono); font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums}
+  .ctl small{display:block; color:var(--muted); font-size:12.5px; line-height:1.45; margin-top:3px}
+  input[type=range]{width:100%; margin:8px 0 0; accent-color:var(--accent)}
+  input[type=range]:focus-visible{outline:2px solid var(--accent); outline-offset:3px}
+
+  .readout{display:grid; grid-template-columns:repeat(2,1fr); border-top:1px solid var(--line); border-left:1px solid var(--line)}
+  .readout div{border-right:1px solid var(--line); border-bottom:1px solid var(--line); padding:11px 13px; background:var(--sunk)}
+  .readout b{display:block; font-family:var(--mono); font-size:9.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); font-weight:400}
+  .readout span{display:block; font-family:var(--mono); font-size:20px; font-weight:500; margin-top:3px; font-variant-numeric:tabular-nums}
+  .readout span.hot{color:var(--accent)}
+  .readout span.cool{color:var(--signal)}
+  .note{font-size:12.5px; color:var(--muted); padding:11px 13px; line-height:1.5}
+
+  .tablewrap{overflow-x:auto}
+  table{border-collapse:collapse; width:100%; min-width:640px; font-size:14.5px}
+  th,td{text-align:left; padding:11px 14px; border-bottom:1px solid var(--line); vertical-align:top}
+  th{font-family:var(--mono); font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); font-weight:400; background:var(--sunk)}
+  td.layer{font-family:var(--mono); font-size:12.5px; white-space:nowrap}
+  tr:last-child td{border-bottom:0}
+
+  .closing{padding:20px; font-family:var(--serif); font-size:18px; line-height:1.6; max-width:66ch}
+  .closing p{margin:0 0 14px}
+  .closing p:last-child{margin:0}
+  .closing strong{font-family:var(--sans); font-weight:600; font-size:16.5px}
+  footer{margin-top:26px; font-family:var(--mono); font-size:11px; color:var(--muted); letter-spacing:.06em; display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap}
+
+  @media (prefers-reduced-motion: reduce){ .flowdot{display:none} }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+
+  <header class="titleblock">
+    <div class="tb-main">
+      <p class="tb-eyebrow">Sheet 01 &mdash; Sectional assembly</p>
+      <h1>The AI Engine, in Section</h1>
+      <p class="tb-sub">Mass enters the dome at the left. Compute and algorithms drive the pump. Leverage leaves the bell at the right. Thirteen stations, two return loops, one injected disturbance &mdash; select any part of the drawing.</p>
+    </div>
+    <div class="tb-meta">
+      <div><b>Drawing</b><span>AI-ENGINE-2.0 / 01</span></div>
+      <div><b>Stations</b><span>13</span></div>
+      <div><b>Return loops</b><span>2 &mdash; breeder, duty cycle</span></div>
+      <div><b>Cycle</b><span>Staged, closed fuel</span></div>
+    </div>
+  </header>
+
+  <section class="card">
+    <div class="card-hd"><b>Sectional drawing</b><span>click or tab to any station</span></div>
+    <div class="figure">
+      <svg class="engine" viewBox="0 0 1400 660" role="img" aria-label="Sectional cutaway of the AI engine: dome, feed ducts, turbopump, injector, combustion chamber, throat and expansion bell">
+        <defs>
+          <path id="flowfwd" d="M62,320 C60,208 116,151 196,151 H306 L342,179 H598 L642,206 L698,262 C722,286 778,286 806,320 H1004 C1090,320 1210,320 1318,320" fill="none"/>
+          <path id="flowback" d="M996,250 V96 H244 V150" fill="none"/>
+          <marker id="tick" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="var(--line-strong)"/>
+          </marker>
+        </defs>
+
+        <!-- centreline -->
+        <line class="axis" x1="24" y1="320" x2="1376" y2="320"/>
+        <text class="stamp" x="24" y="640">Mass in &#8594;</text>
+        <text class="stamp" x="1376" y="640" text-anchor="end">&#8594; Energy out</text>
+
+        <!-- 12 · BREEDER RETURN LINE (drawn first, behind) -->
+        <g class="node" id="n-breeder" tabindex="0" role="button" aria-label="Station 12: breeder return line">
+          <path class="hit" d="M986,244 V116 C986,100 974,92 958,92 H250 C232,92 222,104 222,120 V146" stroke-width="30" fill="none"/>
+          <path class="ln" d="M986,244 V116 C986,100 974,92 958,92 H250 C232,92 222,104 222,120 V146"/>
+          <path class="ln" d="M1006,244 V116 C1006,86 990,72 962,72 H246 C214,72 202,92 202,120 V150"/>
+          <circle class="bdg" cx="600" cy="44" r="13"/><text class="bdgn" x="600" y="44">12</text>
+          <text class="cap mid" x="600" y="66">Breeder return &#183; output becomes mass</text>
+        </g>
+
+        <!-- 1 · PROPELLANT DOME -->
+        <g class="node" id="n-dome" tabindex="0" role="button" aria-label="Station 1: propellant dome">
+          <path class="hit" d="M172,138 H126 C64,138 30,218 30,320 C30,422 64,502 126,502 H172 V476 H132 C82,476 56,410 56,320 C56,230 82,164 132,164 H172 Z" fill="var(--surface)" stroke="none"/>
+          <path class="fillzone" d="M172,164 H132 C82,164 56,230 56,320 C56,410 82,476 132,476 H172 Z"/>
+          <path class="ln" d="M172,138 H126 C64,138 30,218 30,320 C30,422 64,502 126,502 H172"/>
+          <path class="ln" d="M172,164 H132 C82,164 56,230 56,320 C56,410 82,476 132,476 H172"/>
+          <path class="ln thin" d="M62,246 H96 M62,394 H96"/>
+          <circle class="bdg" cx="104" cy="300" r="13"/><text class="bdgn" x="104" y="300">01</text>
+          <text class="cap mid" x="104" y="336">Substrate</text>
+          <text class="cap mid" x="104" y="350">dome</text>
+        </g>
+
+        <!-- 2 · UPPER FEED DUCT -->
+        <g class="node" id="n-feed" tabindex="0" role="button" aria-label="Station 2: mass feed duct">
+          <path class="hit" d="M172,138 H300 L336,166 H600 L636,196 H668 V222 H624 L588,192 H324 L288,164 H172 Z" fill="var(--surface)" stroke="none"/>
+          <path class="fillzone" d="M172,138 H300 L336,166 H600 L636,196 H668 V222 H624 L588,192 H324 L288,164 H172 Z"/>
+          <path class="ln" d="M172,138 H300 L336,166 H600 L636,196 H668"/>
+          <path class="ln" d="M172,164 H288 L324,192 H588 L624,222 H668"/>
+          <path class="ln thin" d="M236,138 V164 M236,150 H300"/>
+          <circle class="bdg" cx="258" cy="120" r="13"/><text class="bdgn" x="258" y="120">02</text>
+          <text class="cap" x="278" y="124">Mass feed line</text>
+        </g>
+
+        <!-- 3 · MAIN VALVE -->
+        <g class="node" id="n-gate" tabindex="0" role="button" aria-label="Station 3: main mass valve">
+          <rect class="hit" x="424" y="146" width="78" height="66" fill="var(--surface)" stroke="none"/>
+          <rect class="fillzone" x="430" y="152" width="66" height="54"/>
+          <path class="ln" d="M430,152 H496 V206 H430 Z"/>
+          <path class="ln thin" d="M448,152 V206 M478,152 V206"/>
+          <circle class="bdg" cx="463" cy="124" r="13"/><text class="bdgn" x="463" y="124">03</text>
+          <text class="cap" x="483" y="128">Mass gate</text>
+        </g>
+
+        <!-- 4 · SECONDARY INTAKE -->
+        <g class="node" id="n-intake" tabindex="0" role="button" aria-label="Station 4: secondary bandwidth intake">
+          <path class="hit" d="M172,502 H300 L336,474 H600 L636,444 H668 V418 H624 L588,448 H324 L288,476 H172 Z" fill="var(--surface)" stroke="none"/>
+          <path class="fillzone" d="M172,502 H300 L336,474 H600 L636,444 H668 V418 H624 L588,448 H324 L288,476 H172 Z"/>
+          <path class="ln" d="M172,502 H300 L336,474 H600 L636,444 H668"/>
+          <path class="ln" d="M172,476 H288 L324,448 H588 L624,418 H668"/>
+          <path class="ln" d="M430,454 H496 V508 H430 Z"/>
+          <path class="ln thin" d="M448,454 V508 M478,454 V508"/>
+          <circle class="bdg" cx="463" cy="536" r="13"/><text class="bdgn" x="463" y="536">04</text>
+          <text class="cap" x="483" y="540">Bandwidth inlet</text>
+        </g>
+
+        <!-- elbows into pump -->
+        <path class="ln thin" d="M668,196 L688,248 M668,222 L700,266 M668,444 L688,392 M668,418 L700,374"/>
+
+        <!-- 5 · TURBOPUMP HOUSING -->
+        <g class="node" id="n-pump" tabindex="0" role="button" aria-label="Station 5: turbopump">
+          <circle class="hit" cx="746" cy="320" r="96" fill="var(--surface)" stroke="none"/>
+          <circle class="fillzone" cx="746" cy="320" r="94"/>
+          <circle class="ln" cx="746" cy="320" r="94"/>
+          <circle class="ln" cx="746" cy="320" r="78"/>
+          <path class="ln thin" d="M666,272 H826 M666,368 H826"/>
+          <circle class="bdg" cx="746" cy="188" r="13"/><text class="bdgn" x="746" y="188">05</text>
+          <text class="cap mid" x="746" y="166">Convolution engine</text>
+        </g>
+
+        <!-- 6 · IMPELLER -->
+        <g class="node" id="n-impeller" tabindex="0" role="button" aria-label="Station 6: impeller and coupling stage">
+          <circle class="hit" cx="746" cy="320" r="62" fill="var(--surface)" stroke="none"/>
+          <circle class="fillzone" cx="746" cy="320" r="62"/>
+          <circle class="ln" cx="746" cy="320" r="62"/>
+          <circle class="ln" cx="746" cy="320" r="26"/>
+          <g class="ln thin" id="vanes"></g>
+          <circle class="bdg" cx="746" cy="320" r="13"/><text class="bdgn" x="746" y="320">06</text>
+        </g>
+
+        <!-- 7 · INJECTOR PLATE -->
+        <g class="node" id="n-injector" tabindex="0" role="button" aria-label="Station 7: injector plate">
+          <rect class="hit" x="836" y="228" width="44" height="184" fill="var(--surface)" stroke="none"/>
+          <rect class="fillzone" x="844" y="236" width="24" height="168"/>
+          <path class="ln" d="M844,236 H868 V404 H844 Z"/>
+          <path class="ln thin" d="M844,268 H868 M844,300 H868 M844,340 H868 M844,372 H868"/>
+          <circle class="bdg" cx="856" cy="196" r="13"/><text class="bdgn" x="856" y="196">07</text>
+          <text class="cap mid" x="856" y="174">Injector</text>
+        </g>
+
+        <!-- 8 · COMBUSTION CHAMBER -->
+        <g class="node" id="n-chamber" tabindex="0" role="button" aria-label="Station 8: combustion chamber">
+          <path class="hit" d="M868,244 H948 C982,246 1000,254 1010,280 V360 C1000,386 982,394 948,396 H868 Z" fill="var(--surface)" stroke="none"/>
+          <path class="fillzone" d="M868,244 H948 C982,246 1000,254 1010,280 V360 C1000,386 982,394 948,396 H868 Z"/>
+          <path class="ln" d="M868,244 H948 C982,246 1000,254 1010,280"/>
+          <path class="ln" d="M868,396 H948 C982,394 1000,386 1010,360"/>
+          <circle class="bdg" cx="908" cy="320" r="13"/><text class="bdgn" x="908" y="320">08</text>
+          <text class="cap mid" x="908" y="354">Cascade</text>
+        </g>
+
+        <!-- 9 · DISTURBANCE BLEED -->
+        <g class="node" id="n-bleed" tabindex="0" role="button" aria-label="Station 9: disturbance bleed, spectral flooding">
+          <rect class="hit" x="852" y="404" width="170" height="122" fill="var(--surface)" stroke="none"/>
+          <rect class="fillzone" x="862" y="470" width="140" height="48"/>
+          <path class="ln dash" d="M932,396 V470"/>
+          <path class="ln dash" d="M862,470 H1002 V518 H862 Z"/>
+          <circle class="bdg" cx="932" cy="548" r="13"/><text class="bdgn" x="932" y="548">09</text>
+          <text class="cap mid" x="932" y="500">Spectral flooding</text>
+        </g>
+
+        <!-- 10 · THROAT -->
+        <g class="node" id="n-throat" tabindex="0" role="button" aria-label="Station 10: throat">
+          <rect class="hit" x="992" y="262" width="40" height="116" fill="var(--surface)" stroke="none"/>
+          <path class="ln" d="M1010,276 V364"/>
+          <path class="ln thin" d="M998,272 H1022 M998,368 H1022"/>
+          <circle class="bdg" cx="1010" cy="414" r="13"/><text class="bdgn" x="1010" y="414">10</text>
+          <text class="cap mid" x="1010" y="438">Throat</text>
+        </g>
+
+        <!-- 11 · EXPANSION BELL -->
+        <g class="node" id="n-nozzle" tabindex="0" role="button" aria-label="Station 11: expansion bell and output">
+          <path class="hit" d="M1010,280 C1060,262 1140,212 1336,148 V492 C1140,428 1060,378 1010,360 Z" fill="var(--surface)" stroke="none"/>
+          <path class="fillzone" d="M1010,280 C1060,262 1140,212 1336,148 V492 C1140,428 1060,378 1010,360 Z"/>
+          <path class="ln" d="M1010,280 C1060,262 1140,212 1336,148"/>
+          <path class="ln" d="M1010,360 C1060,378 1140,428 1336,492"/>
+          <path class="ln thin" d="M1016,296 C1064,280 1142,234 1332,174"/>
+          <path class="ln thin" d="M1016,344 C1064,360 1142,406 1332,466"/>
+          <ellipse class="ln" cx="1336" cy="320" rx="24" ry="172"/>
+          <circle class="bdg" cx="1196" cy="320" r="13"/><text class="bdgn" x="1196" y="320">11</text>
+          <text class="cap mid" x="1196" y="354">Displacement</text>
+        </g>
+
+        <!-- 13 · GAS GENERATOR + DUTY-CYCLE RETURN -->
+        <g class="node" id="n-duty" tabindex="0" role="button" aria-label="Station 13: gas generator and duty cycle return">
+          <path class="hit" d="M700,430 H796 V514 H700 Z M700,478 H640 C600,478 580,510 580,546 H430 C408,546 398,532 398,512 V476" stroke-width="28" fill="var(--surface)"/>
+          <rect class="fillzone" x="700" y="430" width="96" height="84"/>
+          <path class="ln" d="M700,430 H796 V514 H700 Z"/>
+          <path class="ln thin" d="M700,456 H796 M700,488 H796"/>
+          <path class="ln" d="M700,478 H648 C608,478 586,506 586,546 H430 C410,546 400,534 400,514 V476"/>
+          <path class="ln" d="M700,498 H652 C628,498 606,520 606,566 H428 C396,566 380,548 380,514 V502"/>
+          <circle class="bdg" cx="600" cy="596" r="13"/><text class="bdgn" x="600" y="596">13</text>
+          <text class="cap mid" x="600" y="618">Duty-cycle return &#183; 70 / 30</text>
+        </g>
+
+        <!-- flow dots -->
+        <circle class="flowdot" id="d0" r="3.4" cx="-40" cy="320"/>
+        <circle class="flowdot" id="d1" r="3.4" cx="-40" cy="320"/>
+        <circle class="flowdot" id="d2" r="3.4" cx="-40" cy="320"/>
+        <circle class="flowdot" id="d3" r="3.4" cx="-40" cy="320"/>
+        <circle class="flowdot" id="b0" r="2.6" cx="-40" cy="320" opacity=".5"/>
+      </svg>
+    </div>
+  </section>
+
+  <div class="grid2">
+
+    <section class="card" style="margin-top:0">
+      <div class="card-hd"><b>Station</b><span id="idx">05 / 13</span></div>
+      <div class="panel-body">
+        <p class="p-desig" id="p-desig">Station 05 &mdash; Turbopump</p>
+        <h2 class="p-name" id="p-name">The convolution engine</h2>
+        <div class="p-tf" id="p-tf">Compute &#215; algorithms</div>
+        <p class="p-text" id="p-text">Select a station in the drawing.</p>
+        <dl class="p-fail">
+          <dt>Bounded by</dt><dd id="p-bound">&mdash;</dd>
+          <dt>Failure mode</dt><dd class="bad" id="p-fail">&mdash;</dd>
+        </dl>
+      </div>
+    </section>
+
+    <section class="card" style="margin-top:0">
+      <div class="card-hd"><b>Operating point</b><span>illustrative</span></div>
+      <div class="console-body">
+        <div class="ctl">
+          <div class="ctl-top"><label for="c-mass">Input mass density</label><output id="o-mass">0.72</output></div>
+          <input type="range" id="c-mass" min="0" max="100" value="72">
+          <small>Latent reactive structure in what you feed the engine. A thin prompt is a saturated molecule.</small>
+        </div>
+        <div class="ctl">
+          <div class="ctl-top"><label for="c-engine">Convolution capacity</label><output id="o-engine">0.80</output></div>
+          <input type="range" id="c-engine" min="0" max="100" value="80">
+          <small>How many elements the pump holds in mutual tension. Rises on its own, without you.</small>
+        </div>
+        <div class="ctl">
+          <div class="ctl-top"><label for="c-purity">Signal purity</label><output id="o-purity">0.65</output></div>
+          <input type="range" id="c-purity" min="0" max="100" value="65">
+          <small>Share of total energy in the dominant eigenmode. Every secondary mode is an open leverage port.</small>
+        </div>
+        <div class="ctl">
+          <div class="ctl-top"><label for="c-flood">Disturbance bleed</label><output id="o-flood">0.30</output></div>
+          <input type="range" id="c-flood" min="0" max="100" value="30">
+          <small>Entropy injected downstream of the pump, where no better engine can reach it.</small>
+        </div>
+
+        <div class="readout">
+          <div><b>Cascade depth</b><span class="cool" id="r-depth">14 steps</span></div>
+          <div><b>Coupling</b><span id="r-couple">tight</span></div>
+          <div><b>Leakage ports</b><span id="r-ports">2</span></div>
+          <div><b>Displacement</b><span class="hot" id="r-disp">61</span></div>
+        </div>
+        <p class="note">Illustrative arithmetic, not measurement. It exists to show which variable dominates: hold capacity fixed and move mass, and the output moves further than the reverse.</p>
+      </div>
+    </section>
+
+  </div>
+
+  <section class="card">
+    <div class="card-hd"><b>Order of operations</b><span>each layer can only lose grade against the one above</span></div>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th>Layer</th><th>What it sets</th><th>Signature when it fails</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="layer">Substrate</td><td>The absolute ceiling on what can be transferred</td><td>Fluent, confident, structurally empty output &mdash; access without internalization</td></tr>
+          <tr><td class="layer">Coupling</td><td>How much of that ceiling is actually reached</td><td>Tidy modular assembly whose components extract again unchanged</td></tr>
+          <tr><td class="layer">Penetration</td><td>Whether fusion produces law or decoration</td><td>Vivid cross-domain analogy that predicts nothing</td></tr>
+          <tr><td class="layer">Construction</td><td>Whether fused material survives externalization</td><td>Real insight rendered into an object that cannot carry it</td></tr>
+          <tr><td class="layer">Metric</td><td>How the result is graded</td><td>Polish mistaken for displacement; the question answered, the model unmoved</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-hd"><b>The circuit, stated</b><span>AI Engine 2.0</span></div>
+    <div class="closing">
+      <p>Signal purity and the duty cycle decide whether a node can generate anything at all. Density decides the ceiling of what it generates. The engine convolves that mass through a cascade whose maximum depth is set by the engine but whose reachable depth is set by the latent structure in the mass. The output is synthesis energy, graded by displacement, and it re-enters the system as superior fuel.</p>
+      <p>Compounded density becomes a superior predictive model, and a superior model, on contact, reinterprets thinner ones. That is what leverage is.</p>
+      <p><strong>The engine is scaling either way. The only open variable is whether the mass can sustain the chain reaction.</strong></p>
+    </div>
+  </section>
+
+  <footer>
+    <span>Rev. B &#183; 2026-09-26</span>
+    <span>Source: The Converter and the Cascade</span>
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* impeller vanes */
+  var vanes = document.getElementById("vanes"), i, a, x1, y1, x2, y2, d = "";
+  for (i = 0; i < 18; i++){
+    a = (i / 18) * Math.PI * 2;
+    x1 = 746 + 28 * Math.cos(a);
+    y1 = 320 + 28 * Math.sin(a);
+    x2 = 746 + 60 * Math.cos(a + 0.34);
+    y2 = 320 + 60 * Math.sin(a + 0.34);
+    d += "M" + x1.toFixed(1) + "," + y1.toFixed(1) + " L" + x2.toFixed(1) + "," + y2.toFixed(1) + " ";
+  }
+  vanes.setAttribute("d", d);
+
+  var DATA = {
+    "n-dome": {
+      i:1, desig:"Station 01 — Propellant dome",
+      name:"Substrate fidelity",
+      tf:"The ceiling condition · compressed, internalized mass",
+      text:"The dome holds what is already inside the conversion boundary. The substrate is not the information the operator can access; it is the material already compressed into reusable internal representation. Accessible information sits outside the boundary and must be retrieved in real time, consuming the very capacity the conversion requires. Fidelity has two properties: depth of compression, and whether the representations encode the generative mechanism or only its surface appearance.",
+      bound:"Bounds everything downstream. There is no repair operation further along the line.",
+      fail:"Shallow, surface-encoded substrate. It supports fluent output and no density."
+    },
+    "n-feed": {
+      i:2, desig:"Station 02 — Mass feed line",
+      name:"Intent, and the mass behind it",
+      tf:"Primary inflow · θₐ(s)",
+      text:"What enters the loop is not a wish, it is a quantity of mass. Human cognitive output — ideas, structured observation, original frameworks, cross-domain pattern recognition — is the raw material fed into the engine. Processing has been industrialized out of biology and decision logic is increasingly discovered by the machines themselves; this line carries the part of the triad that remains distinctly human.",
+      bound:"Whatever the operator has actually accumulated, not what they can reach.",
+      fail:"Requesting an outcome while supplying almost nothing to convert."
+    },
+    "n-gate": {
+      i:3, desig:"Station 03 — Main valve",
+      name:"The mass gate",
+      tf:"The behavioral fork · throttle setting",
+      text:"Every node meets the same structural decision at this valve: how much mass to feed an engine whose efficiency is rising on its own. The majority read a stronger engine as permission to supply less. A minority read the same fact as a reason to supply more. The arithmetic is financial and exact — a high return rate on near-zero principal yields almost nothing, while the same rate on a large principal compounds explosively.",
+      bound:"Set before any generation happens. Nothing downstream re-opens it.",
+      fail:"Reading rising capacity as permission to throttle down. The two trajectories then diverge on both fronts at once."
+    },
+    "n-intake": {
+      i:4, desig:"Station 04 — Bandwidth inlet",
+      name:"The secondary intake",
+      tf:"Base-reality feed · active load limit",
+      text:"Coupling is expensive: it requires holding multiple full frameworks in simultaneous active state rather than swapping between them serially, and that is precisely the capacity limit most operators cannot exceed. This inlet also carries the clean, unnarrated perceptual intake that the deep-work mode later integrates. The working protocol is pairwise — collide two frameworks cleanly, harden the fused product, attach the next component to the now-robust structure.",
+      bound:"Total active load must stay inside operating bandwidth.",
+      fail:"Attempting maximum coupling across everything at once; interpretation drifts into noise and second-guessing."
+    },
+    "n-pump": {
+      i:5, desig:"Station 05 — Turbopump",
+      name:"The convolution engine",
+      tf:"Compute × algorithms · the reactor housing",
+      text:"Conversion is not a black box that mysteriously improves. The engine holds the components of the mass in dynamic mutual tension — each idea and framework constraining and reconfiguring the others — and propagates that interaction through successive stages until emergent structure forms. What the scaling of compute and algorithms actually raises is not generic speed but the depth and width of cascade the engine can chain before coherence collapses.",
+      bound:"Sets the maximum reachable depth, never the depth actually reached.",
+      fail:"None on its own. The engine always convolves. It simply cannot cascade further than the mass allows."
+    },
+    "n-impeller": {
+      i:6, desig:"Station 06 — Impeller",
+      name:"Interdependent coupling",
+      tf:"The reaction itself · mutual deformation",
+      text:"The operative word is mutual. Additive integration sequences and stitches components, each retaining its original shape — and the parts can be extracted afterward unchanged, which is the diagnostic signature of a failed conversion. Interdependent coupling makes each component's admissible configuration conditional on the live state of the others, so nothing exits in the shape it entered. Loose coupling yields recombination. Tight coupling yields transformation.",
+      bound:"The density of latent relational bonds in the mass.",
+      fail:"Components that survive the process intact. Nothing was converted; material was arranged."
+    },
+    "n-injector": {
+      i:7, desig:"Station 07 — Injector plate",
+      name:"Structural penetration",
+      tf:"The governing multiplier · mixing depth",
+      text:"The engine alone does not guarantee density. Material can be collided at maximum tightness and still produce nothing but an elaborate metaphor. What separates structural fusion from decorative fusion is the capacity to penetrate beneath surface phenomena, extract the generative principle operating underneath, and carry that principle across domains at different levels of abstraction. It multiplies everything the engine does.",
+      bound:"The level at which extraction occurs — surface appearance, or generative law.",
+      fail:"Collisions matched on appearances. The fused product is a vivid analogy that predicts nothing."
+    },
+    "n-chamber": {
+      i:8, desig:"Station 08 — Combustion chamber",
+      name:"Cascade propagation",
+      tf:"Free integrator · where the chain reaction runs",
+      text:"A cascade cannot run on inert precursors. Each step works only because the material carries latent reactive sites that, once activated, create the conditions for the next transformation. High-grade mass carries frameworks with defined causal claims and observations that partially contradict each other: contradiction forces restructuring, restructuring exposes leverage points, leverage points reorganize the original frameworks. The integrator is why this compounds rather than merely settling.",
+      bound:"Engine sets the maximum depth; mass sets how much of it is reachable.",
+      fail:"Starving the cascade — owning a reactor capable of twenty-step synthesis and feeding it fuel that supports two."
+    },
+    "n-bleed": {
+      i:9, desig:"Station 09 — Disturbance bleed",
+      name:"Spectral flooding",
+      tf:"Load disturbance · enters with a negative sign",
+      text:"Cheap external supply — validation, status-seeking, belonging, comfort, ego reinforcement — operates as lossy secondary eigenmodes. Energy scatters across competing bands, cross-mode coupling produces interference and phase jitter, and each mode requires continuous external pumping to sustain. Every one of them is an open leverage port through which the surrounding layers can transduce, route, and absorb the node.",
+      bound:"It enters downstream of the pump, so no better engine reaches it. Only the return loops reject it.",
+      fail:"Belonging in particular, which forces the node into lower-coherence collective modes and caps its primary reference frequency."
+    },
+    "n-throat": {
+      i:10, desig:"Station 10 — Throat",
+      name:"The density differential",
+      tf:"Choke point · where the flow goes sonic",
+      text:"Place many predictive engines in contact and command concentrates where the map is best, because every other node's locally optimal move is to align with the highest-resolution map available. When models of unequal density stay in sustained contact the denser one does not argue with the thinner — it reinterprets it, absorbing its scattered observations as low-resolution special cases of mechanisms it has already converged. Leverage is that differential expressing itself.",
+      bound:"One cross-section governs everything passing through. It multiplies; it cannot manufacture grade.",
+      fail:"Chasing the tokens of authority instead of the structure. Tokens cannot forecast, and the reconciliation is brutal."
+    },
+    "n-nozzle": {
+      i:11, desig:"Station 11 — Expansion bell",
+      name:"Displacement",
+      tf:"Synthesis energy · the only honest metric",
+      text:"The output is not graded by accuracy, coherence, or polish, all of which are satisfied trivially by low-density work. It is graded by displacement: how far it shifts the receiver's internal model of reality relative to the intent of the question that produced it. An output that answers the surface question completely and changes nothing has performed retrieval. One that reorganizes the receiver's model of the domain has performed conversion.",
+      bound:"Requires every upstream station to have held.",
+      fail:"Polish read as grade. Polish comes from the last stage alone; displacement comes from the whole assembly."
+    },
+    "n-breeder": {
+      i:12, desig:"Station 12 — Breeder return",
+      name:"The closed fuel cycle",
+      tf:"Output routed back to the dome",
+      text:"In cascade chemistry the product of one convoluted route is frequently a better precursor than any simple starting material. The same holds cognitively: the emergent output of a deep synthesis re-enters as new mass, higher-grade than the operator could have written cold. The converter does not merely release energy from mass, it breeds superior fuel as a byproduct — each cycle beginning from sharper tensions and denser bonds.",
+      bound:"Closes only if outputs are captured, structured, and fed back into the dome.",
+      fail:"Treating outputs as disposable answers. The line opens, and every session restarts from raw ore."
+    },
+    "n-duty": {
+      i:13, desig:"Station 13 — Gas generator",
+      name:"The 70 / 30 duty cycle",
+      tf:"Self-limiting return · drives the pump",
+      text:"Seventy percent runs as self-actualization mode: deep internal work with external perception minimized, tightening the internal reference frame. Thirty percent runs as base reality mode: pure high-fidelity perception with narration suspended, the node operating as a clean sensor. Both imbalances are failure states — too much environment and the self becomes entirely externally defined; too much self and the structures are never stress-tested.",
+      bound:"A slower interlaid wave sets spectrum tolerance and decides when controlled entropy is admitted.",
+      fail:"Either extreme. A diluted reactive existence on one side, ungrounded structure on the other."
+    }
+  };
+
+  var els = {
+    desig: document.getElementById("p-desig"),
+    name:  document.getElementById("p-name"),
+    tf:    document.getElementById("p-tf"),
+    text:  document.getElementById("p-text"),
+    bound: document.getElementById("p-bound"),
+    fail:  document.getElementById("p-fail"),
+    idx:   document.getElementById("idx")
+  };
+  var active = null;
+
+  function pad(n){ return (n < 10 ? "0" : "") + n; }
+
+  function select(id){
+    var dd = DATA[id];
+    if (!dd) return;
+    if (active){ var prev = document.getElementById(active); if (prev) prev.classList.remove("is-active"); }
+    active = id;
+    var node = document.getElementById(id);
+    if (node){
+      node.classList.add("is-active");
+      node.parentNode.appendChild(node);
+    }
+    els.desig.textContent = dd.desig;
+    els.name.textContent  = dd.name;
+    els.tf.textContent    = dd.tf;
+    els.text.textContent  = dd.text;
+    els.bound.textContent = dd.bound;
+    els.fail.textContent  = dd.fail;
+    els.idx.textContent   = pad(dd.i) + " / 13";
+  }
+
+  Object.keys(DATA).forEach(function(id){
+    var n = document.getElementById(id);
+    if (!n) return;
+    n.addEventListener("click", function(){ select(id); });
+    n.addEventListener("keydown", function(e){
+      if (e.key === "Enter" || e.key === " "){ e.preventDefault(); select(id); }
+    });
+  });
+
+  select("n-pump");
+
+  /* ---------- operating point ---------- */
+  var cMass   = document.getElementById("c-mass"),
+      cEngine = document.getElementById("c-engine"),
+      cPurity = document.getElementById("c-purity"),
+      cFlood  = document.getElementById("c-flood"),
+      oMass   = document.getElementById("o-mass"),
+      oEngine = document.getElementById("o-engine"),
+      oPurity = document.getElementById("o-purity"),
+      oFlood  = document.getElementById("o-flood"),
+      rDepth  = document.getElementById("r-depth"),
+      rCouple = document.getElementById("r-couple"),
+      rPorts  = document.getElementById("r-ports"),
+      rDisp   = document.getElementById("r-disp");
+
+  var state = { m:0.72, e:0.80, p:0.65, d:0.30 };
+
+  function coupleWord(v){
+    if (v < 0.18) return "additive";
+    if (v < 0.38) return "loose";
+    if (v < 0.62) return "working";
+    if (v < 0.84) return "tight";
+    return "maximum";
+  }
+
+  function recompute(){
+    state.m = cMass.value   / 100;
+    state.e = cEngine.value / 100;
+    state.p = cPurity.value / 100;
+    state.d = cFlood.value  / 100;
+
+    oMass.textContent   = state.m.toFixed(2);
+    oEngine.textContent = state.e.toFixed(2);
+    oPurity.textContent = state.p.toFixed(2);
+    oFlood.textContent  = state.d.toFixed(2);
+
+    var depth = Math.max(1, Math.round(1 + 19 * Math.pow(state.m, 1.15) * (0.35 + 0.65 * state.e)));
+    var couple = state.m * (0.45 + 0.55 * state.p);
+    var ports = Math.round(6 * (1 - state.p));
+    var disp = 100 * Math.pow(state.m, 1.1) * (0.35 + 0.65 * state.e) * (0.5 + 0.5 * state.p) * (1 - 0.6 * state.d * (1 - state.p));
+
+    rDepth.textContent  = depth + (depth === 1 ? " step" : " steps");
+    rCouple.textContent = coupleWord(couple);
+    rPorts.textContent  = ports;
+    rDisp.textContent   = Math.round(disp);
+  }
+
+  [cMass, cEngine, cPurity, cFlood].forEach(function(c){ c.addEventListener("input", recompute); });
+  recompute();
+
+  /* ---------- flow ---------- */
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (!reduce){
+    var fwd  = document.getElementById("flowfwd"),
+        back = document.getElementById("flowback"),
+        dots = [document.getElementById("d0"), document.getElementById("d1"), document.getElementById("d2"), document.getElementById("d3")],
+        bdot = document.getElementById("b0"),
+        Lf = fwd.getTotalLength(),
+        Lb = back.getTotalLength(),
+        t0 = null;
+
+    function frame(t){
+      if (t0 === null) t0 = t;
+      var el = (t - t0) / 1000;
+      var speed = 0.10 + 0.18 * state.e;
+      for (var k = 0; k < dots.length; k++){
+        var u = (el * speed + k / dots.length) % 1;
+        var pt = fwd.getPointAtLength(u * Lf);
+        dots[k].setAttribute("cx", pt.x);
+        dots[k].setAttribute("cy", pt.y);
+        dots[k].setAttribute("r", (2.0 + 2.8 * state.m).toFixed(2));
+        dots[k].setAttribute("opacity", (0.3 + 0.6 * state.m).toFixed(2));
+      }
+      var ub = (el * speed * 0.75) % 1;
+      var pb = back.getPointAtLength(ub * Lb);
+      bdot.setAttribute("cx", pb.x);
+      bdot.setAttribute("cy", pb.y);
+      bdot.setAttribute("opacity", (0.15 + 0.45 * state.m).toFixed(2));
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+})();
+</script>
+</body>
+</html>
