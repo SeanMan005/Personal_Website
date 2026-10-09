@@ -131,6 +131,30 @@ h2{font-size:clamp(20px,2.6vw,27px);text-transform:uppercase;
 .lnk.todo .badge{color:var(--mute)}
 .lnk.todo .go{color:var(--mute)}
 
+/* ---------- 4. meta links ---------- */
+.metagrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:30px}
+.mcard{display:block;background:var(--panel);border:1px solid var(--grid);
+  border-radius:12px;overflow:hidden;color:var(--ink)}
+.mcard:hover{text-decoration:none;background:var(--box);
+  border-color:var(--c,var(--hub))}
+.mcard .shot{position:relative;display:block;border-bottom:1px solid var(--grid)}
+.mcard svg{display:block;width:100%;height:auto;aspect-ratio:16/9}
+.mcard .host{position:absolute;left:10px;top:10px;
+  font:400 10.5px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  letter-spacing:.04em;color:var(--mute);background:rgba(11,14,22,.78);
+  border:1px solid var(--grid);border-radius:5px;padding:4px 7px}
+.mcard .mmeta{display:block;padding:17px 19px 19px;
+  border-left:3px solid var(--c,var(--hub))}
+.mcard .mtop{display:flex;justify-content:space-between;gap:12px;
+  align-items:baseline}
+.mcard h3{font-size:16px;margin:0;line-height:1.3}
+.mcard .badge{font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--c,var(--hub));border:1px solid var(--grid);border-radius:20px;
+  padding:3px 9px;white-space:nowrap;flex:none}
+.mcard p{margin:10px 0 0;color:var(--mute);font-size:14px}
+.mcard .go{display:inline-block;margin-top:13px;font-size:13px;font-weight:700;
+  letter-spacing:.06em;color:var(--c,var(--hub))}
+
 footer{border-top:1px solid var(--grid);padding-top:44px;padding-bottom:68px;
   color:var(--mute);font-size:14px}
 footer b{color:var(--ink)}
@@ -139,7 +163,7 @@ footer .flinks{display:flex;flex-wrap:wrap;gap:18px;margin-top:14px}
 @media(max-width:900px){
   .herogrid{grid-template-columns:1fr;gap:28px}
   .pcol{max-width:280px}
-  .resgrid,.links{grid-template-columns:1fr}
+  .resgrid,.links,.metagrid{grid-template-columns:1fr}
 }
 @media(max-width:560px){
   .wrap{padding-left:16px;padding-right:16px}
@@ -153,6 +177,7 @@ footer .flinks{display:flex;flex-wrap:wrap;gap:18px;margin-top:14px}
   <a href="#about">About</a>
   <a href="#resume">Resume</a>
   <a href="#links">My Links</a>
+  <a href="#meta-links">Meta Links</a>
   <span class="spacer"></span>
   <a class="cta" href="Sean_Obiacoro_Resume.pdf" data-resume="download">Download resume</a>
 </div></nav>
@@ -338,10 +363,12 @@ footer .flinks{display:flex;flex-wrap:wrap;gap:18px;margin-top:14px}
       <span class="go">Open the gallery &rsaquo;</span>
     </a>
 
-    <a class="lnk todo" href="#" style="--c:#7c87a3">
-      <div class="ltop"><h3>Meta Systems</h3><span class="badge">Add link</span></div>
-      <p>INACTIVE</p>
-      <span class="go">Add link</span>
+    <a class="lnk" href="#meta-links" style="--c:#7c87a3">
+      <div class="ltop"><h3>Meta Systems</h3>
+        <span class="badge">3 sites</span></div>
+      <p>Three research pages published on their own sites &mdash; the five marks of a
+        living system, low to high dimensionality, and the density reasoning engine.</p>
+      <span class="go">See the panels &rsaquo;</span>
     </a>
 
     <a class="lnk" href="Sean_Obiacoro_Resume.pdf" data-resume="download" style="--c:#3aa0c9">
@@ -381,6 +408,185 @@ footer .flinks{display:flex;flex-wrap:wrap;gap:18px;margin-top:14px}
 </div></section>
 
 
+<!-- ============ 4 · META LINKS ============ -->
+<section id="meta-links"><div class="wrap">
+  <span class="kicker">Published</span>
+  <h2>Meta Links</h2>
+  <p class="lead">Three standalone research pages, each one hosted on its own site. Click a
+    panel to open it.</p>
+
+  <div class="metagrid">
+
+    <!-- 1 · LIVING-SYSTEM -->
+    <a class="mcard" href="https://seanman005.github.io/LIVING-SYSTEM/"
+       target="_blank" rel="noopener" style="--c:#5fd0a0">
+      <span class="shot">
+        <svg viewBox="0 0 320 180" role="img"
+             aria-label="Thumbnail: a closed adaptive loop with an input, a core, an output and a dashed return line, over five numbered marks.">
+          <rect width="320" height="180" fill="#0e1322"/>
+          <g stroke="#26304a" stroke-width="1">
+            <path d="M0 45h320M0 90h320M0 135h320"/>
+            <path d="M80 0v180M160 0v180M240 0v180"/>
+          </g>
+          <!-- input -->
+          <path d="M16 74h106" stroke="#3aa0c9" stroke-width="2.4" fill="none"/>
+          <path d="M124 74l-9-5v10z" fill="#3aa0c9"/>
+          <!-- loop ring -->
+          <circle cx="160" cy="74" r="33" fill="none" stroke="#5fd0a0"
+                  stroke-width="2.4"/>
+          <path d="M160 41l-6-9h12z" fill="#5fd0a0"/>
+          <circle cx="160" cy="74" r="10" fill="#5fd0a0" opacity=".9"/>
+          <!-- output -->
+          <path d="M196 74h108" stroke="#f4c95d" stroke-width="2.4" fill="none"/>
+          <path d="M304 74l-9-5v10z" fill="#f4c95d"/>
+          <!-- dashed return -->
+          <path d="M288 80v30H34V83" stroke="#e0556b" stroke-width="1.8"
+                stroke-dasharray="5 4" fill="none"/>
+          <path d="M34 74l-5 9h10z" fill="#e0556b"/>
+          <!-- five marks -->
+          <g fill="#5fd0a0" opacity=".85">
+            <rect x="28" y="140" width="46" height="5" rx="2.5"/>
+            <rect x="86" y="140" width="46" height="5" rx="2.5"/>
+            <rect x="144" y="140" width="46" height="5" rx="2.5"/>
+            <rect x="202" y="140" width="46" height="5" rx="2.5"/>
+            <rect x="260" y="140" width="46" height="5" rx="2.5"/>
+          </g>
+          <g fill="#7c87a3" font-family="DejaVu Sans, Helvetica, Arial, sans-serif"
+             font-size="9" letter-spacing="1">
+            <text x="28" y="163">I</text>
+            <text x="86" y="163">II</text>
+            <text x="144" y="163">III</text>
+            <text x="202" y="163">IV</text>
+            <text x="260" y="163">V</text>
+          </g>
+        </svg>
+        <span class="host">seanman005.github.io/LIVING-SYSTEM</span>
+      </span>
+      <span class="mmeta">
+        <span class="mtop"><h3>Five Marks of a Living System</h3>
+          <span class="badge">Live site</span></span>
+        <p>A classification plate, substrate-independent: the five behaviours that make a
+          thing alive &mdash; closed adaptive loop, fresh external input, alternation,
+          compounding leverage, entropy filtering. Five plates, five tests.</p>
+        <span class="go">Open the plate &rsaquo;</span>
+      </span>
+    </a>
+
+    <!-- 2 · DIMENSIONALITY -->
+    <a class="mcard" href="https://seanman005.github.io/DIMENSIONALITY/"
+       target="_blank" rel="noopener" style="--c:#9b8cf0">
+      <span class="shot">
+        <svg viewBox="0 0 320 180" role="img"
+             aria-label="Thumbnail: five platforms climbing left to right with a rising line through them and one dashed collapse path.">
+          <rect width="320" height="180" fill="#0e1322"/>
+          <g stroke="#26304a" stroke-width="1">
+            <path d="M0 45h320M0 90h320M0 135h320"/>
+            <path d="M80 0v180M160 0v180M240 0v180"/>
+          </g>
+          <!-- axes -->
+          <path d="M18 158V26" stroke="#7c87a3" stroke-width="1.6" fill="none"/>
+          <path d="M18 26l-5 9h10z" fill="#7c87a3"/>
+          <path d="M18 158h288" stroke="#7c87a3" stroke-width="1.6" fill="none"/>
+          <!-- platforms -->
+          <g fill="#161d33" stroke="#9b8cf0" stroke-width="2">
+            <rect x="30" y="134" width="58" height="12" rx="3"/>
+            <rect x="84" y="112" width="58" height="12" rx="3"/>
+            <rect x="138" y="90" width="58" height="12" rx="3"/>
+            <rect x="192" y="68" width="58" height="12" rx="3"/>
+            <rect x="246" y="46" width="58" height="12" rx="3"/>
+          </g>
+          <!-- rising line -->
+          <path d="M40 134l54-22 54-22 54-22 54-22" stroke="#f4c95d"
+                stroke-width="2.2" fill="none"/>
+          <g fill="#f4c95d">
+            <circle cx="40" cy="134" r="3.4"/>
+            <circle cx="94" cy="112" r="3.4"/>
+            <circle cx="148" cy="90" r="3.4"/>
+            <circle cx="202" cy="68" r="3.4"/>
+            <circle cx="256" cy="46" r="5"/>
+          </g>
+          <!-- the unearned layer -->
+          <path d="M160 86V54h46" stroke="#e0556b" stroke-width="1.8"
+                stroke-dasharray="5 4" fill="none"/>
+          <path d="M206 54l-9-5v10z" fill="#e0556b"/>
+        </svg>
+        <span class="host">seanman005.github.io/DIMENSIONALITY</span>
+      </span>
+      <span class="mmeta">
+        <span class="mtop"><h3>Low to High Dimensionality</h3>
+          <span class="badge">Live site</span></span>
+        <p>Six theories, one mechanism: dimensionality is the price of being wrong, so
+          structure has to be built in order. Each layer is earned only once the layers
+          under it survive contact with reality.</p>
+        <span class="go">Open the essay &rsaquo;</span>
+      </span>
+    </a>
+
+    <!-- 3 · KNOWLEDGE-DENSITY -->
+    <a class="mcard" href="https://seanman005.github.io/KNOWLEDGE-DENSITY/"
+       target="_blank" rel="noopener" style="--c:#f4c95d">
+      <span class="shot">
+        <svg viewBox="0 0 320 180" role="img"
+             aria-label="Thumbnail: six input streams converging on a glowing core, six output streams leaving the other side.">
+          <rect width="320" height="180" fill="#0e1322"/>
+          <g stroke="#26304a" stroke-width="1">
+            <path d="M0 45h320M0 90h320M0 135h320"/>
+            <path d="M80 0v180M160 0v180M240 0v180"/>
+          </g>
+          <!-- inputs -->
+          <g stroke="#3aa0c9" stroke-width="2" fill="none">
+            <path d="M12 26h50L134 90"/>
+            <path d="M12 52h50L134 90"/>
+            <path d="M12 78h50L134 90"/>
+            <path d="M12 104h50L134 90"/>
+            <path d="M12 130h50L134 90"/>
+            <path d="M12 156h50L134 90"/>
+          </g>
+          <!-- core -->
+          <circle cx="160" cy="90" r="46" fill="#f4c95d" opacity=".07"/>
+          <rect x="138" y="52" width="44" height="76" rx="20" fill="#161d33"
+                stroke="#f4c95d" stroke-width="2.4"/>
+          <ellipse cx="160" cy="52" rx="22" ry="7" fill="#161d33"
+                   stroke="#f4c95d" stroke-width="2.4"/>
+          <g stroke="#5fd0a0" stroke-width="1.4">
+            <path d="M152 74h16M152 74v18M168 74v18M152 92h16M160 92v10"
+                  fill="none"/>
+          </g>
+          <g fill="#5fd0a0">
+            <circle cx="152" cy="74" r="2.6"/><circle cx="168" cy="74" r="2.6"/>
+            <circle cx="152" cy="92" r="2.6"/><circle cx="168" cy="92" r="2.6"/>
+            <circle cx="160" cy="104" r="3"/>
+          </g>
+          <!-- outputs -->
+          <g stroke="#f4c95d" stroke-width="2" fill="none">
+            <path d="M186 90L238 26h62"/>
+            <path d="M186 90L238 52h62"/>
+            <path d="M186 90L238 78h62"/>
+            <path d="M186 90L238 104h62"/>
+            <path d="M186 90L238 130h62"/>
+            <path d="M186 90L238 156h62"/>
+          </g>
+          <g fill="#f4c95d">
+            <path d="M308 26l-9-5v10zM308 52l-9-5v10zM308 78l-9-5v10z"/>
+            <path d="M308 104l-9-5v10zM308 130l-9-5v10zM308 156l-9-5v10z"/>
+          </g>
+        </svg>
+        <span class="host">seanman005.github.io/KNOWLEDGE-DENSITY</span>
+      </span>
+      <span class="mmeta">
+        <span class="mtop"><h3>The Density Reasoning Engine</h3>
+          <span class="badge">Live site</span></span>
+        <p>A data centre drawn as one machine &mdash; six input streams converging on the
+          core, six leaving it. Building, crossing, the loop, failure and terms, section by
+          section.</p>
+        <span class="go">Open the engine &rsaquo;</span>
+      </span>
+    </a>
+
+  </div>
+</div></section>
+
+
 <footer><div class="wrap">
   <p><b>Sean Obiacoro</b> &mdash; Seattle, WA &middot;
      <a href="mailto:seanobie05@gmail.com">seanobie05@gmail.com</a></p>
@@ -388,6 +594,7 @@ footer .flinks{display:flex;flex-wrap:wrap;gap:18px;margin-top:14px}
     <a href="#about">About</a>
     <a href="#resume">Resume</a>
     <a href="#links">My Links</a>
+    <a href="#meta-links">Meta Links</a>
     <a href="https://www.linkedin.com/in/sean-obiacoro-82b69523b/" target="_blank" rel="noopener">LinkedIn</a>
     <a href="ai-database-design.html">AI DataBase Design</a>
     <a href="diagrams.html">Systems Diagrams</a>
