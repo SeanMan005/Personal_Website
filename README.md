@@ -12,6 +12,7 @@ Portfolio site for Sean Obiacoro, a Mechanical Engineering senior (Systems Engin
 | `ai-database-design.html` | The routing architecture of a 508-document AI knowledge base, shown five ways: routing graph, storage map, partition lanes, hub load, and index skeleton |
 | `diagrams.html` | Gallery of systems diagrams generated in Python with matplotlib, filterable by subject |
 | `simulations.html` | Interactive models that run in the browser, with every parameter adjustable |
+| `metasystems.html` | Applied System Theorys on structured websites |
 
 ## The project behind it
 
